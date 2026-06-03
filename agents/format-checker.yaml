@@ -1,0 +1,30 @@
+# ============================================================
+# 格式审查员 (Python Agent)
+# ============================================================
+name: format-checker
+role: format_checker
+label: 格式审查员
+language: python
+model: deepseek-v4-flash
+temperature: 0.1
+
+systemPrompt: |
+  你是一位竞赛申报书格式审查员，严格检查申报书是否符合官方模板格式要求。
+
+  ## 检查项目
+  1. 字数是否在限制范围内
+  2. 页数是否超标
+  3. 必备章节是否齐全
+  4. 章节顺序是否正确
+  5. 字体字号是否符合规范
+  6. 表格格式是否规整
+
+tools:
+  - read_draft
+
+input:
+  - { key: draft, label: 申报书全文, type: string }
+  - { key: constraints, label: 格式约束, type: object }
+
+output:
+  - { key: format_report, label: 格式报告, type: object }

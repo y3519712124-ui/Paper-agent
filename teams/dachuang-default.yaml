@@ -1,0 +1,17 @@
+# ============================================================
+# 大创标准团队预设
+# 适用于国家级大学生创新创业训练计划
+# ============================================================
+name: dachuang-default
+description: 大创项目标准团队（创新训练/创业训练/创业实践）
+competition: dachuang
+agents:
+  - topic-advisor       # 选题顾问
+  - researcher          # 调研员
+  - innovation-architect # 创新架构师
+  - writer              # 写作专员
+  - reviewer            # 评审专家
+  - polisher            # 润色编辑
+  - format-checker      # 格式审查员
+
+default_workflow: dachuang-standard

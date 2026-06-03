@@ -1,0 +1,247 @@
+# ============================================================
+# 大创 · 创新训练项目申报书模板
+# Paper-agent 模板定义格式 v1
+# ============================================================
+name: 大创创新训练项目申报书
+id: dachuang-innovation-training
+competition: dachuang
+track: 创新训练
+description: 国家级大学生创新创业训练计划——创新训练项目申报书
+version: "2025"
+
+# ── 格式约束 ──────────────────────────────────────────
+constraints:
+  maxPages: 8
+  maxChars: 8000
+  font: 宋体
+  headingFont: 黑体
+  bodySize: 12pt       # 小四
+  headingSize: 14pt    # 四号
+  lineSpacing: 1.5
+  margins: [2.5cm, 2.0cm, 2.5cm, 2.0cm]  # 上 右 下 左
+
+# ── 章节定义 ──────────────────────────────────────────
+sections:
+  - id: project_name
+    title: 项目名称
+    type: single_line
+    maxLength: 30
+    required: true
+    description: 以 XXX 的 XXX 研究/设计/开发 格式命名
+
+  - id: project_type
+    title: 项目类型
+    type: select
+    required: true
+    options:
+      - 创新训练
+      - 创业训练
+      - 创业实践
+    default: 创新训练
+
+  - id: project_duration
+    title: 项目执行期限
+    type: duration
+    defaultMonths: 12
+
+  - id: team_info
+    title: 团队信息
+    type: table_group
+    tables:
+      - name: 负责人
+        fields:
+          - { key: name, label: 姓名, type: string }
+          - { key: student_id, label: 学号, type: string }
+          - { key: major, label: 专业, type: string }
+          - { key: grade, label: 年级, type: string }
+          - { key: phone, label: 手机, type: string }
+          - { key: email, label: 邮箱, type: string }
+      - name: 团队成员
+        maxRows: 5
+        fields:
+          - { key: name, label: 姓名, type: string }
+          - { key: student_id, label: 学号, type: string }
+          - { key: major, label: 专业, type: string }
+          - { key: grade, label: 年级, type: string }
+          - { key: role, label: 分工, type: string }
+
+  - id: advisor_info
+    title: 指导教师
+    type: group
+    fields:
+      - { key: name, label: 姓名, type: string }
+      - { key: title, label: 职称, type: string }
+      - { key: direction, label: 研究方向, type: string }
+      - { key: phone, label: 手机, type: string }
+
+  - id: abstract
+    title: 项目摘要
+    type: textarea
+    maxChars: 500
+    required: true
+    description: 简要说明项目研究内容、创新点和预期成果
+
+  - id: background
+    title: 立项背景与研究意义
+    type: textarea
+    maxChars: 1500
+    required: true
+    aiPrompt: 请从国家政策导向、行业痛点、技术发展趋势三个层面论述项目背景。
+
+  - id: related_work
+    title: 国内外研究现状
+    type: textarea
+    maxChars: 1000
+    description: 综述国内外相关研究进展，指出已有研究的不足
+
+  - id: content
+    title: 研究内容与技术路线
+    type: textarea
+    maxChars: 2500
+    required: true
+    aiPrompt: 分点列出研究内容，附技术路线图描述。重点说明要解决的核心问题。
+
+  # ── 技术路线图（图片） ──
+  - id: tech_roadmap_img
+    title: 技术路线图
+    type: image
+    images:
+      - id: roadmap
+        label: "图1 技术路线图"
+        maxWidth: "14cm"
+        position: center
+        caption: true
+        description: 项目整体技术路线流程图
+    aiPrompt: 请生成技术路线图的描述，包含各个模块之间的数据流向和依赖关系。
+
+  - id: methodology
+    title: 研究方法
+    type: textarea
+    maxChars: 1000
+    description: 说明采用的研究方法、实验方案、技术手段
+
+  # ── 系统架构图（图片） ──
+  - id: system_arch_img
+    title: 系统架构图
+    type: image
+    images:
+      - id: architecture
+        label: "图2 系统架构图"
+        maxWidth: "14cm"
+        position: center
+        caption: true
+        description: 系统整体架构设计，包含前端、后端、数据层等模块
+    aiPrompt: 请描述系统的分层架构和各个模块的功能。
+
+  - id: innovation
+    title: 创新点
+    type: bullet_list
+    minItems: 3
+    maxItems: 5
+    maxCharsPerItem: 200
+    required: true
+    aiPrompt: 从理论创新、技术创新、应用创新三个维度提炼。
+
+  - id: schedule
+    title: 进度安排
+    type: table
+    columns:
+      - { key: phase, label: 阶段, width: 20% }
+      - { key: time, label: 时间, width: 20% }
+      - { key: tasks, label: 主要任务, width: 40% }
+      - { key: outcome, label: 阶段性成果, width: 20% }
+    minRows: 4
+    defaultRows:
+      - { phase: 调研阶段, time: 第1-2月, tasks: "", outcome: "" }
+      - { phase: 方案设计, time: 第3-4月, tasks: "", outcome: "" }
+      - { phase: 实施阶段, time: 第5-10月, tasks: "", outcome: "" }
+      - { phase: 总结阶段, time: 第11-12月, tasks: "", outcome: "" }
+
+  - id: budget
+    title: 经费预算
+    type: table
+    columns:
+      - { key: item, label: 支出项目, width: 30% }
+      - { key: amount, label: 金额(元), width: 20% }
+      - { key: detail, label: 计算依据, width: 50% }
+    minRows: 3
+    footer:
+      - { key: total, label: 合计, type: sum, source: amount }
+
+  - id: expected_results
+    title: 预期成果
+    type: checklist
+    options:
+      - { id: paper, label: 发表学术论文, countLabel: 篇数 }
+      - { id: patent, label: 申请专利, countLabel: 项数 }
+      - { id: software, label: 软件著作权, countLabel: 项数 }
+      - { id: prototype, label: 实物样机/原型系统 }
+      - { id: report, label: 调研报告 }
+      - { id: other, label: 其他, freeText: true }
+
+  - id: feature
+    title: 项目特色与创新之处
+    type: textarea
+    maxChars: 800
+    aiPrompt: 总结本项目区别于同类研究的独特价值和亮点。
+
+  - id: references
+    title: 参考文献
+    type: reference_list
+    maxItems: 15
+    format: gb7714
+
+  - id: advisor_opinion
+    title: 指导教师意见
+    type: signature_block
+    fields:
+      - { key: opinion, label: 意见, type: textarea }
+      - { key: signature, label: 签字, type: signature }
+      - { key: date, label: 日期, type: date }
+
+  - id: department_opinion
+    title: 院系审核意见
+    type: signature_block
+    fields:
+      - { key: opinion, label: 意见, type: textarea }
+      - { key: seal, label: 盖章, type: seal }
+      - { key: date, label: 日期, type: date }
+
+# ── 变量定义（用户填写） ──────────────────────────────
+variables:
+  - name: project.name
+    label: 项目名称
+    type: string
+    maxLength: 30
+    required: true
+
+  - name: project.type
+    label: 项目类型
+    type: select
+    options: [创新训练, 创业训练, 创业实践]
+
+  - name: project.keywords
+    label: 关键词
+    type: tag_list
+    maxItems: 5
+
+  - name: team.lead.name
+    label: 负责人姓名
+    type: string
+
+  - name: team.members
+    label: 团队成员
+    type: array
+
+  - name: advisor.name
+    label: 指导教师姓名
+    type: string
+
+  - name: advisor.title
+    label: 指导教师职称
+    type: string
+
+  - name: budget.total
+    label: 申请经费总额
+    type: number
+    unit: 元

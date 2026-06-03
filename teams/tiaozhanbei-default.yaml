@@ -1,0 +1,17 @@
+# ============================================================
+# 挑战杯标准团队预设
+# 适用于大挑（学术科技作品竞赛）
+# ============================================================
+name: tiaozhanbei-default
+description: 挑战杯标准团队（课外学术科技作品竞赛）
+competition: tiaozhanbei
+agents:
+  - topic-advisor
+  - researcher
+  - innovation-architect
+  - writer
+  - reviewer
+  - polisher
+  - format-checker
+
+default_workflow: review-loop

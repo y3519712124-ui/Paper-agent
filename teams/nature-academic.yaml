@@ -1,0 +1,14 @@
+# ============================================================
+# Nature 学术写作团队预设
+# 基于 nature-skills 架构
+# ============================================================
+name: nature-academic
+description: Nature学术风格团队——学术写作+评审+润色全流程
+competition: dachuang
+agents:
+  - topic-advisor       # 选题顾问
+  - nature-writer       # Nature学术写作专员
+  - nature-reviewer     # Nature学术评审专家
+  - nature-polisher     # Nature学术润色编辑
+
+default_workflow: nature-standard

@@ -1,0 +1,54 @@
+# ============================================================
+# Nature 学术写作工作流
+# ============================================================
+name: nature-standard
+description: Nature学术风格——选题→学术写作→Nature评审→润色→完成
+competition: universal
+agents:
+  - topic-advisor
+  - nature-writer
+  - nature-reviewer
+  - nature-polisher
+
+maxLoops: 3
+targetScore: 80
+startNode: topic
+
+nodes:
+  - id: topic
+    type: topic_generation
+    label: 选题论证
+    agentRef: topic-advisor
+    inputs: [project_name, variables]
+    outputs: [topic_suggestion]
+    next: [write]
+
+  - id: write
+    type: write_section
+    label: 学术写作
+    agentRef: nature-writer
+    inputs: [topic_suggestion, variables, template_id]
+    outputs: [full_draft]
+    next: [evaluate]
+
+  - id: evaluate
+    type: evaluate
+    label: Nature评审
+    agentRef: nature-reviewer
+    inputs: [full_draft]
+    outputs: [score, review_comments, improvement_suggestions]
+    next: [polish]
+    condition:
+      source: score
+      operator: lt
+      value: 80
+      passTo: polish
+      failTo: ""
+
+  - id: polish
+    type: polish
+    label: 学术润色
+    agentRef: nature-polisher
+    inputs: [full_draft, review_comments, improvement_suggestions]
+    outputs: [full_draft]
+    next: [evaluate]

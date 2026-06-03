@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paper-agent</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=paper-agent-4" />
+  <link rel="alternate icon" href="/favicon.ico?v=paper-agent-4" sizes="any" />
+  <link rel="apple-touch-icon" href="/brand/paper-agent-mark.png?v=paper-agent-4" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=Noto+Sans+SC:wght@400;500;600&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f6fa;
+      --card: #ffffff;
+      --border: #e8eaed;
+      --border-light: #f0f1f4;
+      --text: #323639;
+      --text2: #6b7280;
+      --text3: #9ca3af;
+      --accent: #3b82f6;
+      --accent-light: #eff6ff;
+      --accent-dark: #2563eb;
+      --nav-bg: #f3f4f6;
+      --nav-accent: #91b1c5;
+      --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.02);
+      --shadow-hover: 0 4px 12px rgba(0,0,0,0.06);
+      --radius: 8px;
+      --radius-sm: 4px;
+    }
+
+    html { font-size: 14px; }
+    body {
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

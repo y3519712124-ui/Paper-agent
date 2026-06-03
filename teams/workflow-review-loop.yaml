@@ -1,0 +1,55 @@
+# ============================================================
+# 核心工作流：评审优化循环
+# 所有竞赛通用的核心流程
+# ============================================================
+name: review-loop
+description: 标准评审优化循环——智能体协作完成写作→评审→优化
+competition: universal
+agents:
+  - topic-advisor
+  - writer
+  - reviewer
+  - polisher
+
+maxLoops: 3
+targetScore: 80
+startNode: topic
+
+nodes:
+  - id: topic
+    type: topic_generation
+    label: 选题论证
+    agentRef: topic-advisor
+    inputs: [project_name, variables]
+    outputs: [topic_suggestion]
+    next: [write]
+
+  - id: write
+    type: write_section
+    label: 申报书写作
+    agentRef: writer
+    inputs: [topic_suggestion, variables, template_id]
+    outputs: [full_draft]
+    next: [evaluate]
+
+  - id: evaluate
+    type: evaluate
+    label: 模拟评审
+    agentRef: reviewer
+    inputs: [full_draft]
+    outputs: [score, review_comments, improvement_suggestions]
+    next: [polish]
+    condition:
+      source: score
+      operator: lt
+      value: 80
+      passTo: polish
+      failTo: ""
+
+  - id: polish
+    type: polish
+    label: 定向优化
+    agentRef: polisher
+    inputs: [full_draft, review_comments, improvement_suggestions]
+    outputs: [full_draft]
+    next: [evaluate]

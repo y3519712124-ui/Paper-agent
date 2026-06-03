@@ -1,0 +1,164 @@
+{
+  "name": "paper-agent",
+  "version": "0.1.0",
+  "description": "面向高校竞赛项目书的多智能体生成、编辑与导出工具",
+  "license": "MIT",
+  "author": "Paper-agent contributors",
+  "type": "module",
+  "bin": {
+    "paper": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "desktop/main.cjs",
+  "files": [
+    "dist",
+    "templates",
+    "agents",
+    "teams",
+    "desktop"
+  ],
+  "scripts": {
+    "build": "tsup src/cli/index.ts --format esm --platform node --target node22 --outDir dist --dts --no-config",
+    "dev": "tsx src/cli/index.ts",
+    "build:frontend": "cd frontend && node node_modules/vite/bin/vite.js build",
+    "build:server": "tsup server/index.ts --format esm --platform node --target node22 --outDir server-dist --no-dts --external express --external cors --external ws --external yaml --no-config && node -e \"require('fs').writeFileSync('server-dist/package.json', JSON.stringify({ type: 'module' }, null, 2))\"",
+    "prepare:desktop-resources": "node scripts/prepare-desktop-resources.mjs",
+    "build:desktop": "npm run prepare:desktop-resources && npm run build:frontend && npm run build:server",
+    "pack:win": "npm run build:desktop && electron-builder --win nsis --x64",
+    "pack:linux": "npm run build:desktop && electron-builder --linux tar.gz --x64",
+    "pack:mac": "npm run build:desktop && electron-builder --mac dmg zip --x64",
+    "pack:all": "npm run build:desktop && electron-builder --win nsis --linux tar.gz --mac dmg zip --x64",
+    "test": "vitest run",
+    "smoke:profile": "node scripts/smoke-profile-quality.mjs",
+    "smoke:generation": "node scripts/smoke-generation-guards.mjs",
+    "smoke:export-format": "node scripts/smoke-export-format.mjs",
+    "smoke:editor-agent": "node scripts/smoke-editor-agent.mjs",
+    "smoke:quality-editor-flow": "node scripts/smoke-quality-editor-flow.mjs",
+    "smoke:final-guard": "node scripts/smoke-final-manuscript-guard.mjs",
+    "smoke:minimal-input": "node scripts/smoke-minimal-input-final.mjs",
+    "smoke:all": "npm run smoke:generation && npm run smoke:final-guard && npm run smoke:minimal-input && npm run smoke:editor-agent && npm run smoke:export-format && npm run smoke:quality-editor-flow && npm run smoke:profile",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "ink": "^5.0.0",
+    "ora": "^8.0.0",
+    "react": "^18.3.0",
+    "yaml": "^2.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.0.0"
+  },
+  "build": {
+    "appId": "cn.xinciyuan.paper-agent",
+    "productName": "Paper-agent",
+    "win": {
+      "verifyUpdateCodeSignature": false,
+      "extraResources": [
+        {
+          "from": "desktop/resources/runtime/python",
+          "to": "app-resources/runtime/python"
+        },
+        {
+          "from": "desktop/resources/codex-latex",
+          "to": "app-resources/codex-latex"
+        }
+      ]
+    },
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "desktop/main.cjs",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "frontend/dist",
+        "to": "app-resources/frontend/dist"
+      },
+      {
+        "from": "server-dist",
+        "to": "app-resources/server-dist",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "server/node_modules",
+        "to": "app-resources/server-dist/node_modules",
+        "filter": [
+          "**/*",
+          "!**/@esbuild/**",
+          "!**/esbuild*/**",
+          "!**/typescript/**",
+          "!**/tsx/**"
+        ]
+      },
+      {
+        "from": "python",
+        "to": "app-resources/python"
+      },
+      {
+        "from": "templates",
+        "to": "app-resources/templates"
+      }
+    ],
+    "asar": true,
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Paper-agent"
+    },
+    "linux": {
+      "target": [
+        "tar.gz"
+      ],
+      "category": "Office",
+      "extraResources": [
+        {
+          "from": "desktop/resources/codex-latex",
+          "to": "app-resources/codex-latex",
+          "filter": [
+            "**/*",
+            "!bin/tectonic.exe"
+          ]
+        }
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity",
+      "extraResources": [
+        {
+          "from": "desktop/resources/codex-latex",
+          "to": "app-resources/codex-latex",
+          "filter": [
+            "**/*",
+            "!bin/tectonic.exe"
+          ]
+        }
+      ]
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

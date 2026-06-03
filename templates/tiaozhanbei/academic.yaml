@@ -1,0 +1,179 @@
+# ============================================================
+# 挑战杯 · 课外学术科技作品竞赛申报书模板（大挑）
+# ============================================================
+name: 挑战杯课外学术科技作品申报书
+id: tiaozhanbei-academic
+competition: tiaozhanbei
+track: 课外学术科技作品竞赛
+description: 挑战杯全国大学生课外学术科技作品竞赛申报书
+version: "2025"
+
+constraints:
+  maxPages: 15
+  maxChars: 15000
+  font: 宋体
+  headingFont: 黑体
+  bodySize: 12pt
+  headingSize: 15pt
+  lineSpacing: 1.25
+  margins: [2.5cm, 2.0cm, 2.5cm, 2.0cm]
+
+sections:
+  # ── 作品分类 ──
+  - id: work_category
+    title: 作品分类
+    type: select
+    required: true
+    options:
+      - 自然科学类学术论文
+      - 哲学社会科学类社会调查报告
+      - 科技发明制作A类（科技含量较高）
+      - 科技发明制作B类（投入较少的小发明）
+    description: |
+      自然科学类论文限本科生。
+      科技发明A类指科技含量高、制作投入较大的作品；
+      B类指投入较少、为生产技术或社会生活带来便利的小发明。
+
+  - id: work_name
+    title: 作品名称
+    type: single_line
+    maxLength: 40
+    required: true
+
+  - id: team_info
+    title: 团队信息
+    type: table_group
+    tables:
+      - name: 第一作者/负责人
+        fields:
+          - { key: name, label: 姓名, type: string }
+          - { key: gender, label: 性别, type: select, options: [男, 女] }
+          - { key: birth, label: 出生年月, type: date }
+          - { key: school, label: 学校, type: string }
+          - { key: major, label: 专业, type: string }
+          - { key: grade, label: 年级, type: string }
+          - { key: phone, label: 手机, type: string }
+      - name: 其他作者
+        maxRows: 7
+        fields:
+          - { key: name, label: 姓名, type: string }
+          - { key: school, label: 学校, type: string }
+          - { key: major, label: 专业, type: string }
+          - { key: grade, label: 年级, type: string }
+
+  - id: advisor_info
+    title: 指导教师
+    type: group
+    fields:
+      - { key: name, label: 姓名, type: string }
+      - { key: title, label: 职称, type: string }
+      - { key: unit, label: 单位, type: string }
+      - { key: direction, label: 研究方向, type: string }
+
+  - id: abstract
+    title: 作品简介
+    type: textarea
+    maxChars: 800
+    required: true
+    aiPrompt: 简述作品的研究目的、方法、主要发现/成果及其意义。
+
+  - id: innovation_points
+    title: 发明创造或创新点
+    type: bullet_list
+    minItems: 3
+    maxItems: 6
+    maxCharsPerItem: 300
+    required: true
+    aiPrompt: |
+      对于科技发明类：说明技术创新、结构创新、工艺创新等。
+      对于自然科学论文：说明理论创新、方法创新、发现新现象等。
+      对于社科报告：说明观点创新、方法创新、对策创新等。
+
+  - id: scientific_merit
+    title: 科学性、先进性、实用性说明
+    type: textarea
+    maxChars: 1500
+    required: true
+    aiPrompt: |
+      科学性：理论依据充分、研究方法科学、数据真实可靠。
+      先进性：与国内外同类研究/产品比较，突出优势。
+      实用性：成果的应用前景、推广价值、经济效益或社会效益。
+
+  - id: content_detail
+    title: 作品正文/研究内容
+    type: textarea
+    maxChars: 6000
+    required: true
+    aiPrompt: |
+      根据不同作品类别撰写：
+      自然科学类：引言→材料与方法→结果→讨论→结论
+      社科类：问题的提出→调查方法→数据分析→结论与建议
+      科技发明类：设计思路→技术方案→关键工艺→测试结果→应用情况
+
+  - id: technical_spec
+    title: 技术指标/技术方案
+    type: textarea
+    maxChars: 2000
+    description: 科技发明类填写详细技术参数和实现方案
+    condition:
+      if: work_category
+      in: [科技发明制作A类, 科技发明制作B类]
+
+  - id: survey_method
+    title: 调查方法与样本
+    type: textarea
+    maxChars: 1500
+    description: 社科类填写调查方式、样本量、数据分析方法
+    condition:
+      if: work_category
+      equals: 哲学社会科学类社会调查报告
+
+  - id: review_history
+    title: 作品评审情况
+    type: textarea
+    maxChars: 500
+    description: 作品在何时、何地、何种机构评审/鉴定/获奖
+
+  - id: certification
+    title: 证明材料清单
+    type: attachment_list
+    maxItems: 10
+    types: [专利证书, 论文录用通知, 查新报告, 检测报告, 用户反馈, 获奖证书]
+
+  - id: references
+    title: 参考文献
+    type: reference_list
+    maxItems: 20
+    format: gb7714
+
+  - id: school_opinion
+    title: 学校推荐意见
+    type: signature_block
+    fields:
+      - { key: opinion, label: 意见, type: textarea }
+      - { key: seal, label: 盖章, type: seal }
+      - { key: date, label: 日期, type: date }
+
+variables:
+  - name: work.name
+    label: 作品名称
+    type: string
+    maxLength: 40
+    required: true
+
+  - name: work.category
+    label: 作品分类
+    type: select
+    options: [自然科学类学术论文, 哲学社会科学类社会调查报告, 科技发明制作A类, 科技发明制作B类]
+
+  - name: team.lead.name
+    label: 第一作者姓名
+    type: string
+
+  - name: team.members
+    label: 全体作者
+    type: array
+
+  - name: advisor.name
+    label: 指导教师姓名
+    type: string

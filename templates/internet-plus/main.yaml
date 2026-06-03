@@ -1,0 +1,217 @@
+# ============================================================
+# 互联网+大学生创新创业大赛 项目计划书模板
+# ============================================================
+name: 互联网+大赛项目计划书
+id: internet-plus-main
+competition: internet-plus
+track: 高教主赛道/青年红色筑梦之旅/职教赛道
+description: 中国国际互联网+大学生创新创业大赛项目计划书
+version: "2025"
+
+constraints:
+  maxPages: 20
+  font: 宋体
+  headingFont: 黑体
+  bodySize: 12pt
+  headingSize: 14pt
+  lineSpacing: 1.5
+  margins: [2.5cm, 2.0cm, 2.5cm, 2.0cm]
+
+sections:
+  - id: project_name
+    title: 项目名称
+    type: single_line
+    maxLength: 40
+    required: true
+
+  - id: track_selection
+    title: 参赛赛道
+    type: select
+    required: true
+    options:
+      - 高教主赛道（本科生组）
+      - 高教主赛道（研究生组）
+      - 青年红色筑梦之旅
+      - 职教赛道
+      - 产业命题赛道
+
+  - id: team_info
+    title: 团队信息
+    type: table_group
+    tables:
+      - name: 项目负责人
+        fields:
+          - { key: name, label: 姓名, type: string }
+          - { key: school, label: 所在学校, type: string }
+          - { key: major, label: 专业, type: string }
+          - { key: grade, label: 年级, type: string }
+          - { key: phone, label: 手机, type: string }
+      - name: 核心团队成员
+        maxRows: 8
+        fields:
+          - { key: name, label: 姓名, type: string }
+          - { key: role, label: 角色, type: string }
+          - { key: expertise, label: 专业能力, type: string }
+
+  - id: advisor_info
+    title: 指导老师
+    type: group
+    fields:
+      - { key: name, label: 姓名, type: string }
+      - { key: title, label: 职称, type: string }
+      - { key: expertise, label: 指导方向, type: string }
+
+  - id: executive_summary
+    title: 执行摘要
+    type: textarea
+    maxChars: 1000
+    required: true
+    aiPrompt: |
+      执行摘要是项目计划书的浓缩版，要求：
+      1. 清晰说明项目解决了什么痛点
+      2. 产品/服务核心价值
+      3. 市场机会和竞争优势
+      4. 商业模式亮点
+      5. 团队优势
+      6. 融资需求
+
+  - id: background
+    title: 项目背景与市场痛点
+    type: textarea
+    maxChars: 1500
+    required: true
+    aiPrompt: 从行业现状出发，分析用户未被满足的需求，突出痛点的真实性和紧迫性。
+
+  - id: product_service
+    title: 产品/服务介绍
+    type: textarea
+    maxChars: 2500
+    required: true
+    aiPrompt: |
+      1. 产品/服务核心功能
+      2. 技术原理与实现方案
+      3. 产品形态（APP/小程序/硬件/平台等）
+      4. 用户体验流程
+      5. 产品迭代路线图
+
+  - id: technology
+    title: 核心技术
+    type: textarea
+    maxChars: 2000
+    required: true
+    aiPrompt: |
+      1. 核心技术架构
+      2. 关键技术创新点
+      3. 技术壁垒与知识产权
+      4. 技术成熟度
+      如有专利/论文/软著请详细说明。
+
+  - id: market_analysis
+    title: 市场分析
+    type: textarea
+    maxChars: 2000
+    required: true
+    aiPrompt: |
+      1. 市场规模与增长趋势（引用权威数据）
+      2. 目标用户画像
+      3. 市场痛点验证（问卷/访谈数据）
+      4. 市场切入点分析
+
+  - id: competition
+    title: 竞争分析
+    type: textarea
+    maxChars: 1500
+    aiPrompt: |
+      1. 主要竞争对手分析
+      2. 竞争优势（技术/渠道/资源/团队）
+      3. 竞争策略
+      建议用对比表格呈现。
+
+  - id: business_model
+    title: 商业模式
+    type: textarea
+    maxChars: 2000
+    required: true
+    aiPrompt: |
+      1. 收入来源（销售/订阅/广告/佣金等）
+      2. 定价策略
+      3. 成本结构
+      4. 盈利能力分析
+      5. 商业模式画布
+
+  - id: marketing
+    title: 营销策略
+    type: textarea
+    maxChars: 1500
+    aiPrompt: |
+      1. 推广渠道（线上/线下）
+      2. 获客策略
+      3. 品牌建设
+      4. 合作伙伴
+
+  - id: operations
+    title: 运营计划
+    type: textarea
+    maxChars: 1500
+    aiPrompt: |
+      1. 团队组织架构
+      2. 关键运营指标
+      3. 风险控制
+      4. 供应链/物流管理（如适用）
+
+  - id: financials
+    title: 财务预测
+    type: textarea
+    maxChars: 2000
+    required: true
+    aiPrompt: |
+      1. 收入预测（未来3-5年）
+      2. 成本费用预测
+      3. 利润预测
+      4. 现金流预测
+      5. 投资回报分析
+      6. 融资计划
+      建议配合表格呈现。
+
+  - id: social_value
+    title: 社会价值
+    type: textarea
+    maxChars: 1000
+    description: 项目在就业、环保、乡村振兴、教育、医疗等方面的社会贡献
+    condition:
+      if: track_selection
+      in: [青年红色筑梦之旅]
+
+  - id: risks
+    title: 风险分析与对策
+    type: textarea
+    maxChars: 1500
+    aiPrompt: |
+      分析技术风险、市场风险、管理风险、政策风险及其应对措施。
+
+  - id: appendix
+    title: 附件
+    type: attachment_list
+    maxItems: 15
+    types: [营业执照, 专利证书, 软著证书, 论文, 查新报告, 检测报告, 用户证明, 合作协议, 获奖证书]
+
+variables:
+  - name: project.name
+    label: 项目名称
+    type: string
+    maxLength: 40
+    required: true
+
+  - name: project.track
+    label: 参赛赛道
+    type: select
+    options: [高教主赛道（本科生组）, 高教主赛道（研究生组）, 青年红色筑梦之旅, 职教赛道, 产业命题赛道]
+
+  - name: project.funding_goal
+    label: 融资目标
+    type: number
+    unit: 万元
+
+  - name: team.lead.name
+    label: 负责人姓名
+    type: string

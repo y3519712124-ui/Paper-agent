@@ -1,0 +1,416 @@
+# ============================================================
+# 智炼——智能哑铃 申报书模板
+# 基于湘潭理工学院 大创创业训练项目 真实申报书
+# ============================================================
+name: 创业训练项目商业计划书
+id: dachuang-entrepreneurship-training
+competition: dachuang
+track: 创业训练
+description: 国家级大学生创新创业训练计划——创业训练项目完整商业计划书（含产品/市场/财务/风险）
+version: "2025"
+
+constraints:
+  maxPages: 25
+  maxChars: 25000
+  font: 宋体
+  headingFont: 黑体
+  bodySize: 12pt
+  headingSize: 14pt
+  lineSpacing: 1.5
+  margins: [2.5cm, 2.0cm, 2.5cm, 2.0cm]
+
+sections:
+  # ── 封面信息 ──
+  - id: cover
+    title: 封面
+    type: cover_simple
+    fields:
+      - { key: school, label: 学校名称 }
+      - { key: project_type, label: 项目类型, default: "创业训练项目" }
+
+  - id: project_info
+    title: 项目基本信息
+    type: table_group
+    tables:
+      - name: 项目登记
+        fields:
+          - { key: project_id, label: 项目编号, type: string }
+          - { key: project_name, label: 项目名称, type: string, maxLength: 40 }
+          - { key: category, label: 申报类别, type: string }
+          - { key: leader, label: 项目负责人, type: string }
+          - { key: phone, label: 联系电话, type: string }
+          - { key: college, label: 所在学院, type: string }
+          - { key: student_id, label: 学号, type: string }
+          - { key: major_class, label: 专业班级, type: string }
+          - { key: advisor, label: 指导教师, type: string }
+          - { key: advisor_phone, label: 指导教师电话, type: string }
+          - { key: apply_date, label: 申请日期, type: date }
+          - { key: duration, label: 起止年月, type: string }
+
+  # ── 基本情况 ──
+  - id: basic_info
+    title: 一、基本情况
+    type: textarea
+    maxChars: 500
+    description: 项目基本情况概述
+
+  # ── 立项依据 ──
+  - id: background
+    title: 二、立项依据
+    type: textarea
+    maxChars: 2000
+    required: true
+    aiPrompt: 从行业痛点、国家政策、技术趋势三个维度论述。
+
+  # ── 经费预算 ──
+  - id: budget
+    title: 三、经费预算
+    type: table
+    columns:
+      - { key: item, label: 开支科目, width: 25% }
+      - { key: detail, label: 明细, width: 45% }
+      - { key: amount, label: 金额(元), width: 15% }
+      - { key: note, label: 备注, width: 15% }
+    minRows: 5
+    footer:
+      - { key: total, label: 合计, type: sum, source: amount }
+
+  # ── 摘要 ──
+  - id: abstract
+    title: 第一部分 摘要
+    type: textarea
+    maxChars: 800
+    required: true
+    aiPrompt: 概述项目核心价值、目标用户、商业模式和竞争优势。突出"AI+健身"的创新结合。
+
+  # ── 第一章 项目介绍 ──
+  - id: ch1_intro
+    title: 第一章 项目介绍
+    type: group
+
+  - id: project_brief
+    title: 1.1 项目简介
+    type: textarea
+    maxChars: 600
+    required: true
+    aiPrompt: 说明项目的核心产品/服务，要解决的痛点问题，目标用户，核心技术优势。
+
+  # 项目构想图
+  - id: concept_image
+    title: 产品构想图
+    type: image
+    images:
+      - id: concept
+        label: "图1 产品构想示意图"
+        maxWidth: "14cm"
+        position: center
+        caption: true
+    description: AI私教智能哑铃动作纠正系统用户界面或系统架构
+
+  - id: project_bg
+    title: 1.2 项目背景
+    type: group
+
+  - id: industry_bg
+    title: 1.2.1 行业背景
+    type: textarea
+    maxChars: 600
+    aiPrompt: 市场数据、用户痛点、现有方案不足。引用数据和报告。
+
+  - id: national_bg
+    title: 1.2.2 国家背景
+    type: textarea
+    maxChars: 400
+    aiPrompt: 全民健身国家战略、大学生创新创业政策、AI+体育政策支持。
+
+  - id: product_intro
+    title: 1.3 产品介绍
+    type: group
+
+  - id: product_principle
+    title: 1.3.1 产品原理
+    type: textarea
+    maxChars: 800
+    aiPrompt: 姿态捕捉→骨骼点识别→动作量化分析→实时语音反馈→报告生成。
+
+  # 算法代码截图
+  - id: algorithm_image
+    title: 算法实现界面
+    type: image
+    images:
+      - id: algorithm
+        label: "图2 算法代码实现界面"
+        maxWidth: "12cm"
+        position: center
+        caption: true
+    description: 上肢关节角度与运动轨迹算法代码截图
+
+  - id: product_flow
+    title: 1.3.2 产品使用流程
+    type: textarea
+    maxChars: 400
+    aiPrompt: 用户从打开App到完成训练的全流程描述。
+
+  # 使用流程图
+  - id: flow_image
+    title: 产品使用流程图
+    type: image
+    images:
+      - id: flow
+        label: "图3 产品使用流程图"
+        maxWidth: "14cm"
+        position: center
+        caption: true
+
+  - id: target_market
+    title: 1.3.3 目标市场
+    type: textarea
+    maxChars: 300
+    aiPrompt: 核心用户画像（大学生、年轻白领）、核心场景（宿舍、居家）、核心需求。
+
+  - id: r_and_d
+    title: 1.3.4 产品研发过程
+    type: textarea
+    maxChars: 600
+    aiPrompt: 从需求调研→技术预研→原型开发→测试迭代的完整研发流程。
+
+  - id: project_status
+    title: 1.3.5 项目现状
+    type: textarea
+    maxChars: 400
+    aiPrompt: 技术、产品、团队、市场四个维度的当前进展状态。
+
+  - id: mission_vision
+    title: 1.3.6 使命、愿景、价值观
+    type: textarea
+    maxChars: 300
+
+  - id: achievements
+    title: 1.3.7 所获奖项和证书
+    type: bullet_list
+    minItems: 1
+    aiPrompt: 列出项目已获得的竞赛奖项、立项、专利软著等。
+
+  # ── 第二章 市场分析 ──
+  - id: ch2_market
+    title: 第二章 市场分析
+    type: group
+
+  - id: market_size
+    title: 2.1 市场规模分析
+    type: textarea
+    maxChars: 400
+    aiPrompt: 引用权威数据说明市场规模和目标用户群规模。
+
+  - id: industry_analysis
+    title: 2.2 行业状况分析
+    type: textarea
+    maxChars: 500
+    aiPrompt: 分析上中下游产业链结构。
+
+  - id: target_analysis
+    title: 2.3 目标市场分析
+    type: textarea
+    maxChars: 400
+    aiPrompt: 分阶段说明市场拓展路径（种子期→核心期→扩展期）。
+
+  - id: competition
+    title: 2.4 竞争对手分析
+    type: table
+    columns:
+      - { key: competitor, label: 竞争对手, width: 25% }
+      - { key: advantage, label: 优势, width: 30% }
+      - { key: weakness, label: 劣势, width: 30% }
+      - { key: our_edge, label: 我方优势, width: 15% }
+    minRows: 3
+
+  - id: marketing_strategy
+    title: 2.5 市场营销策略
+    type: textarea
+    maxChars: 600
+    aiPrompt: 校园社群裂变、场景化营销、达人体验计划、线下地推等。
+
+  # ── 第三章 商业模式 ──
+  - id: ch3_business
+    title: 第三章 商业及发展模式
+    type: group
+
+  - id: biz_model
+    title: 3.1 商业模式
+    type: textarea
+    maxChars: 600
+    aiPrompt: Freemium+硬件联名+B端服务三位一体盈利体系。
+
+  # 商业模式图
+  - id: biz_model_image
+    title: 商业模式图
+    type: image
+    images:
+      - id: biz
+        label: "图4 商业模式图"
+        maxWidth: "14cm"
+        position: center
+        caption: true
+
+  - id: five_year_plan
+    title: 3.2 五年规划
+    type: table
+    columns:
+      - { key: year, label: 阶段, width: 15% }
+      - { key: goal, label: 目标, width: 35% }
+      - { key: action, label: 关键行动, width: 35% }
+      - { key: metric, label: 核心指标, width: 15% }
+    minRows: 5
+
+  - id: long_term_plan
+    title: 3.3 长期规划
+    type: textarea
+    maxChars: 300
+
+  - id: swot
+    title: 3.4.1 SWOT分析
+    type: table
+    columns:
+      - { key: type, label: 类型, width: 20% }
+      - { key: content, label: 内容, width: 80% }
+    minRows: 4
+    defaultRows:
+      - { type: S（优势）, content: "" }
+      - { type: W（劣势）, content: "" }
+      - { type: O（机会）, content: "" }
+      - { type: T（威胁）, content: "" }
+
+  # ── 第四章 团队 ──
+  - id: ch4_team
+    title: 第四章 团队介绍
+    type: group
+
+  - id: team_members
+    title: 4.1 团队成员
+    type: textarea
+    maxChars: 1500
+    aiPrompt: 每个成员介绍姓名、专业年级、职责、核心能力和经历。
+
+  - id: advisor_intro
+    title: 4.2 指导教师介绍
+    type: textarea
+    maxChars: 300
+
+  # ── 第五章 合作单位 ──
+  - id: ch5_partners
+    title: 第五章 合作单位
+    type: textarea
+    maxChars: 500
+
+  # ── 第六章 财务预测 ──
+  - id: ch6_finance
+    title: 第六章 财务预测与分析
+    type: group
+
+  - id: funding_plan
+    title: 6.1 融资方案
+    type: textarea
+    maxChars: 800
+    aiPrompt: 初始资金来源（大创经费+自筹）、天使轮融资计划、估值逻辑。
+
+  - id: income_cost
+    title: 6.2 收入与成本预测
+    type: textarea
+    maxChars: 1000
+    aiPrompt: 盈利点分析、收入预算（首年及增长预测）、成本结构、期间费用。
+
+  - id: finance_analysis
+    title: 6.3 财务分析
+    type: textarea
+    maxChars: 500
+    aiPrompt: 收入与净利润分析、基本财务指标（ROI、回收期等）。
+
+  - id: finance_statements
+    title: 6.4 预测财务报表
+    type: textarea
+    maxChars: 800
+    aiPrompt: 预测资产负债表、利润表、现金流量表的编制说明和关键数据。
+
+  # 财务数据图
+  - id: finance_chart_image
+    title: 财务预测图
+    type: image
+    images:
+      - id: finance
+        label: "图5 财务预测分析图"
+        maxWidth: "14cm"
+        position: center
+        caption: true
+    description: 收入增长曲线、成本结构饼图或利润趋势图
+
+  # ── 第七章 风险管理 ──
+  - id: ch7_risk
+    title: 第七章 风险及管控
+    type: table
+    columns:
+      - { key: type, label: 风险类型, width: 15% }
+      - { key: description, label: 风险描述, width: 35% }
+      - { key: probability, label: 概率, width: 15% }
+      - { key: impact, label: 影响, width: 15% }
+      - { key: measure, label: 应对措施, width: 20% }
+    minRows: 4
+
+  # ── 附录 ──
+  - id: appendix
+    title: 第三部分 附录
+    type: group
+
+  - id: appendix_list
+    title: 附录清单
+    type: checklist
+    options:
+      - { id: patent1, label: 专利与发明 }
+      - { id: patent2, label: 专利授权许可 }
+      - { id: standard, label: 标准文件 }
+      - { id: paper, label: 发表论文 }
+      - { id: report, label: 检测报告 }
+      - { id: license, label: 营业执照 }
+      - { id: contract, label: 合同 }
+      - { id: agreement, label: 战略合作协议 }
+      - { id: feedback, label: 用户反馈使用报告 }
+      - { id: code, label: 项目核心代码截图 }
+
+  # ── 签名 ──
+  - id: advisor_opinion
+    title: 四、指导教师推荐意见
+    type: signature_block
+
+  - id: college_opinion
+    title: 五、学院推荐意见
+    type: signature_block
+
+  - id: review_opinion
+    title: 六、评审专家组意见
+    type: signature_block
+
+  - id: school_opinion
+    title: 七、学校意见
+    type: signature_block
+
+variables:
+  - name: project.name
+    label: 项目名称
+    type: string
+    maxLength: 40
+    required: true
+
+  - name: project.school
+    label: 学校名称
+    type: string
+
+  - name: project.leader
+    label: 项目负责人
+    type: string
+
+  - name: team.members
+    label: 团队成员
+    type: array
+
+  - name: advisor.name
+    label: 指导教师姓名
+    type: string

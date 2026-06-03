@@ -1,0 +1,16 @@
+# ============================================================
+# 互联网+竞赛标准团队预设
+# ============================================================
+name: internet-plus-default
+description: 互联网+大赛标准团队
+competition: internet-plus
+agents:
+  - topic-advisor
+  - researcher
+  - innovation-architect
+  - writer
+  - reviewer
+  - polisher
+  - format-checker
+
+default_workflow: review-loop
