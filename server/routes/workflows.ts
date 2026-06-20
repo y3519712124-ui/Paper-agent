@@ -1101,6 +1101,31 @@ function projectWorkflowSteps(config: WorkflowConfig) {
   return WORKFLOW_TEMPLATES[effectiveProjectBookTemplateId(config)]?.steps ?? WORKFLOW_TEMPLATES.dachuang.steps;
 }
 
+function workflowManifestPath(workflowId: string) {
+  return join(projectDirFor(workflowId), ".paper", "artifacts", "00-workflow-manifest.md");
+}
+
+function buildWorkflowManifestArtifact(config: WorkflowConfig, steps: StepDef[]) {
+  const referenceUsed = referenceStyleWorkflowSteps(config).length > 0;
+  const chapterList = steps.map((step, index) => `${index + 1}. ${step.targetSection}`).join("\n");
+  return [
+    "# 00-workflow-manifest",
+    "",
+    "## 任务边界",
+    `- 项目：${config.name}`,
+    `- 竞赛类型：${config.competition}`,
+    `- 参考文档：${referenceUsed ? "已加载，仅用于结构与写法" : "未上传，使用竞赛结构"}`,
+    "",
+    "## 计划顺序",
+    chapterList,
+    "",
+    "## 输出约束",
+    "- 只向执行层传递当前主题、当前上传、当前参考结构和当前证据边界。",
+    "- 不把审计语、修稿语和系统提示混入正文明文。",
+    "- 审计层单独输出报告，不直接覆盖计划层内容。",
+  ].join("\n");
+}
+
 function cleanReferenceExcerpt(text: string) {
   return String(text || "")
     .replace(/\[PDF page \d+\]/g, "\n")
@@ -1509,6 +1534,59 @@ function referenceStyleBlueprint(config: WorkflowConfig) {
     return `- ${item.chapter}${sections}`;
   });
   return `\n\n## 从当前上传参考文档识别出的目录蓝图\n${blocks.join("\n")}\n\n执行口径：上传参考文档存在时，工作流步骤、终稿目录、一级章顺序、二级标题层级和段落布局优先贴近上述蓝图；若蓝图与内置竞赛骨架冲突，以当前上传参考文档为准。`;
+}
+
+function buildReferenceStyleBlueprintArtifact(config: WorkflowConfig) {
+  const chapters = referenceStyleChapters(config);
+  if (!chapters.length) {
+    return [
+      "# 参考写法蓝图",
+      "",
+      "## 生成范围",
+      "- 当前未检测到可用的参考文档，改用竞赛项目书基础结构。",
+      "- 生成时仍遵守：只围绕当前主题，不借用其他项目或历史样例。",
+      "",
+      "## 结构映射",
+      "- project-book-audit-loop",
+      "- 项目概述",
+      "- 团队与分工",
+      "- 场景、问题与方案",
+      "- 竞品/市场/应用分析",
+      "- 实施计划、预算与证据",
+      "",
+      "## 书写规则",
+      "- 首段先写场景、矛盾、政策或行业机会，再落到项目本体。",
+      "- 每个章节只承担一个明确任务，避免标题化堆叠。",
+      "- 表格行尽量短，超长内容拆成两行，不挤成一格。",
+      "- 不把系统说明、审计话语或模板口吻写进正式正文。",
+    ].join("\n");
+  }
+  const lines = [
+    "# 参考写法蓝图",
+    "",
+    "## 生成范围",
+    "- 仅学习当前上传参考文档的结构、段落布局、标题层级、表格节奏和写法，不引用其他项目样例。",
+    "- 参考文档存在时，优先使用其章节顺序和版式习惯；不存在时，使用竞赛基础结构。",
+    "",
+    "## 结构映射",
+  ];
+  for (const item of chapters) {
+    lines.push(`- ${item.chapter}`);
+    if (item.sections.length) {
+      for (const section of item.sections) lines.push(`  - ${section}`);
+    } else {
+      lines.push("  - 无显式二级标题，按段落节奏展开");
+    }
+  }
+  lines.push(
+    "",
+    "## 书写规则",
+    "- 首段先写场景、矛盾、政策或行业机会，再落到项目本体。",
+    "- 每个章节只承担一个明确任务，避免标题化堆叠。",
+    "- 表格行尽量短，超长内容拆成两行，不挤成一格。",
+    "- 不把系统说明、审计话语或模板口吻写进正式正文。",
+  );
+  return lines.join("\n");
 }
 
 function withReferenceContext(config: WorkflowConfig, uploadKnowledgeBody?: string): WorkflowConfig {
@@ -7456,6 +7534,17 @@ function qualityStepDef(): StepDef {
   };
 }
 
+function planStepDef(): StepDef {
+  return {
+    id: "workflow-manifest",
+    name: "工作流计划蓝图",
+    agent: "Claude 计划层",
+    checkpointType: "workflow-manifest",
+    targetSection: "00-workflow-manifest",
+    instruction: "生成工作流计划工件，只描述执行顺序、证据边界和参考约束，不生成正文。",
+  };
+}
+
 function reviewStepDef(): StepDef {
   return {
     id: "final-review-loop",
@@ -8183,6 +8272,13 @@ async function runWorkflow(id: string) {
     const evidencePath = join(artifactsDir, "00-evidence-index.md");
     writeFileSync(evidencePath, evidenceArtifact, "utf-8");
     artifacts.push({ step: evidenceStep, fileName: "00-evidence-index.md", path: evidencePath, content: evidenceArtifact });
+    const blueprintBody = buildReferenceStyleBlueprintArtifact(referenceConfig);
+    if (blueprintBody) {
+      const blueprintArtifact = formatArtifact(evidenceStep, blueprintBody, referenceConfig);
+      const blueprintPath = join(artifactsDir, "00-project-book-audit-blueprint.md");
+      writeFileSync(blueprintPath, blueprintArtifact, "utf-8");
+      artifacts.push({ step: evidenceStep, fileName: "00-project-book-audit-blueprint.md", path: blueprintPath, content: blueprintArtifact });
+    }
     checkpointStore.save({
       id: `${id}-research-brief`,
       workflowId: id,
@@ -8249,6 +8345,29 @@ async function runWorkflow(id: string) {
       agent: evidenceStep.agent,
       status: "completed",
       artifact: "00-evidence-index.md",
+    });
+
+    const manifestStep: StepDef = {
+      id: "workflow-manifest",
+      name: "工作流计划蓝图",
+      agent: "Claude 计划层",
+      checkpointType: "workflow-manifest",
+      targetSection: "00-workflow-manifest",
+      instruction: "生成工作流计划工件，只描述执行顺序、证据边界和参考约束，不生成正文。",
+    };
+    const manifestBody = buildWorkflowManifestArtifact(referenceConfig, workflowSteps);
+    const manifestArtifact = formatArtifact(manifestStep, manifestBody, referenceConfig);
+    const manifestPath = join(artifactsDir, "00-workflow-manifest.md");
+    writeFileSync(manifestPath, manifestArtifact, "utf-8");
+    artifacts.push({ step: manifestStep, fileName: "00-workflow-manifest.md", path: manifestPath, content: manifestArtifact });
+    broadcast("step", {
+      workflowId: id,
+      step: 0,
+      total: workflowSteps.length,
+      name: manifestStep.name,
+      agent: manifestStep.agent,
+      status: "completed",
+      artifact: "00-workflow-manifest.md",
     });
 
     for (let i = 0; i < workflowSteps.length; i++) {
@@ -8438,6 +8557,58 @@ async function runWorkflow(id: string) {
   }
 }
 
+async function runWorkflowPlanning(id: string) {
+  const config = readConfig(id);
+  if (!config) throw new Error("工作流不存在");
+  const projectDir = join(PROJECTS_DIR, id);
+  ensureProjectDirs(projectDir);
+  const referenceConfig = { ...config };
+  const workflowSteps = projectWorkflowSteps(referenceConfig);
+  const artifactsDir = join(projectDir, ".paper", "artifacts");
+  mkdirSync(artifactsDir, { recursive: true });
+  const manifestStep: StepDef = {
+    id: "workflow-manifest",
+    name: "工作流规划清单",
+    agent: "规划器",
+    checkpointType: "workflow-manifest",
+    targetSection: "00-workflow-manifest",
+    instruction: "输出规划清单，不写正文。",
+  };
+  const manifestBody = buildWorkflowManifestArtifact(referenceConfig, workflowSteps);
+  writeFileSync(join(artifactsDir, "00-workflow-manifest.md"), formatArtifact(manifestStep, manifestBody, referenceConfig), "utf-8");
+  const blueprintBody = buildReferenceStyleBlueprintArtifact(referenceConfig);
+  if (blueprintBody) {
+    const blueprintStep: StepDef = {
+      id: "reference-blueprint",
+      name: "参考写法蓝图",
+      agent: "规划器",
+      checkpointType: "reference-blueprint",
+      targetSection: "00-reference-style-blueprint",
+      instruction: "提取结构与写法，不继承事实。",
+    };
+    writeFileSync(join(artifactsDir, "00-reference-style-blueprint.md"), formatArtifact(blueprintStep, blueprintBody, referenceConfig), "utf-8");
+  }
+  const uploadKnowledge = refreshUploadKnowledgeArtifact(id);
+  const researchBody = finalizeSubmissionTone(await buildResearchBrief(referenceConfig));
+  writeFileSync(join(artifactsDir, "00-research-brief.md"), researchBody, "utf-8");
+  const evidenceBody = buildEvidenceIndex(referenceConfig, `${researchBody}\n\n${uploadKnowledge.body}`);
+  writeFileSync(join(artifactsDir, "00-evidence-index.md"), evidenceBody, "utf-8");
+  referenceConfig.status = "planned";
+  referenceConfig.updated = new Date().toISOString();
+  writeConfig(id, referenceConfig);
+  return { success: true, workflow: workflowSummary(id) };
+}
+
+async function runWorkflowExecution(id: string) {
+  const finalPath = await runWorkflow(id);
+  return { success: true, workflow: workflowSummary(id), finalPath };
+}
+
+async function runWorkflowAudit(id: string) {
+  const result = await buildDeliveryPackage(id, false);
+  return { success: true, workflow: result.workflow, quality: result.quality, delivery: result.delivery, files: result.files };
+}
+
 type ExportFormat = "docx" | "pdf" | "tex";
 
 function exportProjectBook(id: string, format: ExportFormat) {
@@ -8451,7 +8622,7 @@ function exportProjectBook(id: string, format: ExportFormat) {
   mkdirSync(EXPORTS_DIR, { recursive: true });
   const safeName = safeId(summary.name || id);
   const outputPath = join(EXPORTS_DIR, `${safeName}-${Date.now()}.${format}`);
-  const scriptPath = join(process.cwd(), "..", "python", "paper_agent", "export", "project_book.py");
+  const scriptPath = join(process.cwd(), "python", "paper_agent", "export", "project_book.py");
   const settings = getRuntimeSettings();
   const payload = JSON.stringify({
     markdown: readFileSync(finalPath, "utf-8"),
@@ -8599,6 +8770,23 @@ function buildDeliveryGuidance(finalBook: string, checks: DeliveryCheck[]) {
   };
 }
 
+function buildReviewReportArtifact(config: WorkflowConfig, finalBook: string, quality: ReturnType<typeof buildQualityScanSummary>, delivery: ReturnType<typeof buildDeliveryChecks>) {
+  return [
+    "# 99-review-report",
+    "",
+    "## 审计结论",
+    `- 项目：${config.name}`,
+    `- 综合评分：${quality.score}/${quality.band}`,
+    `- 交付状态：${delivery.status}`,
+    "",
+    "## 需要返修的项",
+    ...(delivery.filter((item) => !item.ok).map((item) => `- ${item.label}：${item.detail}`)),
+    "",
+    "## 通过项",
+    ...(delivery.filter((item) => item.ok).map((item) => `- ${item.label}：${item.detail}`)),
+  ].join("\n");
+}
+
 function readArtifactFilesForDelivery(workflowId: string, config: WorkflowConfig) {
   const projectDir = projectDirFor(workflowId);
   const artifactsDir = join(projectDir, ".paper", "artifacts");
@@ -8662,6 +8850,13 @@ function ensureDeliveryArtifacts(workflowId: string, config: WorkflowConfig, fin
   if ((hasWorkflowHeadings || hasLegacyDachuangChapters || hasOldCommercialChapters || !hasEightChapterDachuang) && hasChapterArtifacts) {
     finalBook = assembleFinalBook(config, artifacts);
     writeFileSync(finalPath, finalBook, "utf-8");
+  }
+  const blueprintPath = join(projectDir, ".paper", "artifacts", "00-project-book-audit-blueprint.md");
+  if (!existsSync(blueprintPath)) {
+    const blueprintBody = buildReferenceStyleBlueprintArtifact(config);
+    if (blueprintBody) {
+      writeFileSync(blueprintPath, formatArtifact({ id: "reference-blueprint", name: "参考写法蓝图", agent: "结构审计", checkpointType: "reference-blueprint", targetSection: "参考写法蓝图", instruction: "根据当前上传参考文档生成结构蓝图" }, blueprintBody, config), "utf-8");
+    }
   }
   finalBook = finalizeManuscriptTone(stripAutoGeneratedSections(removeRepeatedAutoSections(finalBook)));
   const reviewLoop = runFinalBookReviewLoop(workflowId, config, finalBook, artifacts);
@@ -9164,6 +9359,37 @@ workflowsRouter.post("/:id/start", async (req, res) => {
   try {
     const finalPath = await runWorkflow(req.params.id);
     res.json({ success: true, finalPath });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message ?? String(error) });
+  }
+});
+
+workflowsRouter.post("/:id/plan", async (req, res) => {
+  const summary = workflowSummary(req.params.id);
+  if (!summary) return res.status(404).json({ error: "工作流不存在" });
+  try {
+    res.json(await runWorkflowPlanning(req.params.id));
+  } catch (error: any) {
+    res.status(500).json({ error: error.message ?? String(error) });
+  }
+});
+
+workflowsRouter.post("/:id/execute", async (req, res) => {
+  const summary = workflowSummary(req.params.id);
+  if (!summary) return res.status(404).json({ error: "工作流不存在" });
+  if (summary.status === "running") return res.status(409).json({ error: "工作流正在运行" });
+  try {
+    res.json(await runWorkflowExecution(req.params.id));
+  } catch (error: any) {
+    res.status(500).json({ error: error.message ?? String(error) });
+  }
+});
+
+workflowsRouter.post("/:id/audit", async (req, res) => {
+  const summary = workflowSummary(req.params.id);
+  if (!summary) return res.status(404).json({ error: "工作流不存在" });
+  try {
+    res.json(await runWorkflowAudit(req.params.id));
   } catch (error: any) {
     res.status(500).json({ error: error.message ?? String(error) });
   }

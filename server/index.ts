@@ -7,8 +7,7 @@ import express from "express";
 import cors from "cors";
 import http from "node:http";
 import { WebSocketServer } from "ws";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { existsSync, readFileSync } from "node:fs";
 
 import { projectsRouter } from "./routes/projects.js";
@@ -28,8 +27,11 @@ export function broadcast(event: string, data: Record<string, unknown>) {
   }
 }
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3456;
+
+function firstExistingPath(paths: string[]) {
+  return paths.find((candidate) => existsSync(candidate));
+}
 
 const app = express();
 app.use(cors());
@@ -62,8 +64,12 @@ app.use("/api", (_req, res) => {
 });
 
 // ── 静态文件（前端构建产物） ──
-const frontendDist = process.env.PAPER_FRONTEND_DIST || join(__dirname, "..", "frontend", "dist");
-if (existsSync(frontendDist)) {
+const frontendDist = firstExistingPath([
+  process.env.PAPER_FRONTEND_DIST || "",
+  join(process.cwd(), "frontend", "dist"),
+  join(process.cwd(), "..", "frontend", "dist"),
+]);
+if (frontendDist && existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
   // SPA fallback
   const indexPath = join(frontendDist, "index.html");

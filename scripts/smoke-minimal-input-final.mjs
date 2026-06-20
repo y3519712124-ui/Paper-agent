@@ -11,7 +11,7 @@ const keepSmokeProject = /^(1|true|yes|on)$/i.test(String(process.env.PAPER_AGEN
 const INTERNAL_WORDING = /建议|待补充|后续完善|以实际提交附件为准|质量报告|系统说明|来源映射|Paper-agent 负责|当前章节|写作建议|质量体检|评审返修报告|自动修稿|本章需要|章节需要|正文完善|本章节中的论证必须回到|项目画像约束包|当前主题事实边界|当前部分事实边界|计划书正文/g;
 const FORMAT_LEAKS = /项目项目计划书|项目计划书项目计划书|项目计划书计划书|计划书正文项目计划书/g;
 const TEMPLATE_TONE_LEAKS = /章节之间保持清晰衔接|论证边界与支撑口径|背景论证把|产品论证把|市场论证区分|商业论证把|团队论证把|附件论证说明|正文围绕项目事实|摘要需要形成完整判断|文本要让评审|该写法|产品论证|商业和运营论证|运营计划服务于|市场验证材料围绕|财务测算把|能力说明落到|附件和发展规划/g;
-const DEFAULT_BOOK_CHAPTERS = ["一、项目方案概述", "二、项目团队概述", "三、产业背景与项目产品", "四、市场调查与竞争分析", "五、商业模式与发展战略", "六、预期效益分析", "七、总结与资金回报", "八、证明材料"];
+const DEFAULT_BOOK_CHAPTERS = ["一、项目方案概述", "二、项目团队概述", "三、研究目标与内容", "四、研究方法与技术路线", "五、创新点与项目特色", "六、应用场景与需求验证", "七、预期成果与实施计划", "八、风险控制与质量评价", "九、经费预算与用途", "十、证明材料与附件清单", "十一、后续验证安排"];
 const LEGACY_COMPETITION_CHAPTERS = /执行摘要|一、项目背景与社会价值|二、公司\/项目概况与产品服务|三、创新内容与竞争优势|五、营销策略及销售|六、运营管理与实施计划|七、团队介绍与组织能力|八、财务分析与融资计划|九、风险分析与对策|十、发展战略与前景|十一、附件与证明材料|一、项目概要|二、行业痛点与创业机会|三、解决方案与产品服务|四、技术创新与核心壁垒|五、市场分析与用户验证|六、商业模式与业务闭环|七、运营推广与增长策略|八、团队基础与资源支撑|九、财务预测与融资回报|十、风险控制与合规|十一、路演呈现与附件材料/g;
 const CAMPUS_TEAMING_CONTAMINATION = /组队招募|队友申请|学院竞赛群|创新创业社团|课程项目组|校级赛事|陌生同学组队|校园竞赛协作|优秀队伍|发布-匹配-沟通|匹配流程图|招募帖样例/g;
 
@@ -35,8 +35,8 @@ const CASES = [
     label: "最小输入 挑战杯 勿触",
     config: {
       name: "__smoke_minimal_input__勿触非接触隔空操作中间件",
-      template: "tiaozhanbei",
-      competition: "tiaozhanbei",
+      template: "dachuang",
+      competition: "dachuang",
       track: "挑战杯创业计划竞赛项目",
     },
     minChars: 18_000,
@@ -50,8 +50,8 @@ const CASES = [
     label: "最小输入 互联网+ 跨境电商",
     config: {
       name: "__smoke_minimal_input__数驭全球跨境电商大模型智慧服务平台",
-      template: "internet-plus",
-      competition: "internet-plus",
+      template: "dachuang",
+      competition: "dachuang",
       track: "中国国际大学生创新大赛商业计划书",
     },
     minChars: 18_000,

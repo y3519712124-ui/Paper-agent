@@ -1,0 +1,20 @@
+id: creative-whiteboard
+title: 多格式融合白板协作项目
+domain: 知识协作、创意生产与多格式内容编辑
+position: 面向学生团队、产品经理、设计师和内容创作者的多格式文件融合、无限画布、AI协作与结构化输出平台
+users: [学生项目团队, 产品/设计团队, 内容创作者, 教师/培训讲师, 知识工作者]
+scenes: [资料导入整理, 头脑风暴, 流程图/架构图绘制, 多文档协作, AI生成与改写, 项目资料导出]
+painPoints: [资料分散在PDF/Word/图片/网页中, 白板工具结构化输出弱, AI对画布内容理解不足, 多人协作和版本管理成本高]
+productModules: [多格式导入, 无限画布, 结构化卡片, AI并行工作区, 流程图/表格生成, 版本与协作, 导出Word/PDF/PPT]
+techRoute: 多格式解析 -> 内容块结构化 -> 画布布局 -> AI理解与生成 -> 协作编辑 -> 多格式导出
+competitors: [Excalidraw, Miro, FigJam, Notion白板, 传统思维导图工具, 通用文档AI]
+businessModels: [个人订阅, 团队版订阅, 教育版授权, 模板市场, AI额度付费, 企业私有化部署]
+metrics: [文件解析成功率, 画布节点数量, 协作延迟, 导出成功率, AI改写采纳率, 用户留存]
+evidenceFocus: [原型截图, 多格式导入样例, 用户使用流程, 竞品对比, 导出文件, 协作演示视频]
+writingWarnings:
+  - 不要写成普通在线白板
+  - 必须突出多格式融合、AI并行工作区和结构化输出
+  - 不要泛泛写提升效率
+match:
+  - scope: text
+    pattern: '白板|freeflow|多格式|协作|画布|流式|文档融合'

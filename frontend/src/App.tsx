@@ -133,6 +133,10 @@ function compactAssistantStatus(answer: string, action: string, patch: string, f
     .trim();
   const lineCount = text.split(/\r?\n/).filter(Boolean).length;
   const looksLikeManuscript = text.length > 900 || lineCount > 10 || /^#{1,3}\s/m.test(text) || /\|.+\|/.test(text);
+  if (action !== "replace_current_file") {
+    if (!text) return "已完成。";
+    return text.length > 8000 ? `${text.slice(0, 8000)}\n\n（回答较长，已截取前 8000 字。）` : text;
+  }
   if (action === "replace_current_file" && patch) {
     const patchLines = patch.split(/\r?\n/).length;
     const patchChars = patch.length.toLocaleString();
@@ -209,6 +213,45 @@ function normalizeAgentTrace(value: unknown): AgentTraceItem[] {
       status: String(item?.status || "done"),
     }))
     .filter((item) => item.detail.trim());
+}
+
+function assistantLivePhase(elapsedSeconds: number, mode: "light" | "agent") {
+  if (elapsedSeconds < 3) return "正在整理当前编辑器内容";
+  if (elapsedSeconds < 10) return mode === "agent" ? "正在启动 Codex CLI" : "正在调用编辑助手";
+  if (elapsedSeconds < 35) return mode === "agent" ? "Codex 正在读取指令和正文" : "正在生成处理结果";
+  if (elapsedSeconds < 90) return mode === "agent" ? "Codex 正在处理，长文会更慢一些" : "正在等待模型返回";
+  return "仍在处理中，已保持请求连接";
+}
+
+function buildAssistantLiveTrace(params: {
+  instruction: string;
+  fileName: string;
+  mode: "light" | "agent";
+  startedAt: number;
+  chatCount?: number;
+}): AgentTraceItem[] {
+  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - params.startedAt) / 1000));
+  const runningLabel = params.mode === "agent" ? "Codex CLI" : "编辑助手";
+  return [
+    {
+      step: 1,
+      label: "收到指令",
+      detail: params.instruction.length > 80 ? `${params.instruction.slice(0, 80)}...` : params.instruction,
+      status: "done",
+    },
+    {
+      step: 2,
+      label: "准备上下文",
+      detail: `当前文件：${params.fileName}；将最近 ${params.chatCount || 0} 条对话写入 chat-history.md 供 Codex 读取`,
+      status: elapsedSeconds >= 3 ? "done" : "working",
+    },
+    {
+      step: 3,
+      label: runningLabel,
+      detail: `${assistantLivePhase(elapsedSeconds, params.mode)}；已运行 ${elapsedSeconds}s`,
+      status: "working",
+    },
+  ];
 }
 
 type DeliveryFile = {
@@ -648,7 +691,7 @@ function WorkflowList({ onNew, onOpen }: { onNew: () => void; onOpen: (id: strin
             <div className="rule-list">
               <span>参考文档只学结构</span>
               <span>正文只用当前主题事实</span>
-              <span>无参考时固定八章结构</span>
+              <span>无参考时走项目书 Skill</span>
             </div>
           </div>
         </aside>
@@ -663,10 +706,12 @@ const templateMeta: Record<string, { icon: string; badge: string; audience: stri
   "internet-plus": { icon: "IP", badge: "商业路演", audience: "互联网+ / 商业计划书 / 路演文本" },
 };
 
+const NEW_WORKFLOW_DRAFT_KEY = "paper_new_workflow_draft";
+
 function NewWorkflow({ onCancel, onCreated }: { onCancel: () => void; onCreated: (id: string) => void }) {
   const templates = useTemplates();
   type UploadField = "referenceNotes" | "contestFileNotes" | "attachmentNotes";
-  const [form, setForm] = useState({
+  const defaultForm = {
     name: "",
     template: "dachuang",
     competition: "dachuang",
@@ -694,6 +739,16 @@ function NewWorkflow({ onCancel, onCreated }: { onCancel: () => void; onCreated:
     autoAdvance: true,
     humanCheckpoint: false,
     revisionLoop: true,
+  };
+  const [form, setForm] = useState<typeof defaultForm>(() => {
+    try {
+      const saved = localStorage.getItem(NEW_WORKFLOW_DRAFT_KEY);
+      if (!saved) return defaultForm;
+      const parsed = JSON.parse(saved);
+      return { ...defaultForm, ...(parsed?.form || {}) };
+    } catch {
+      return defaultForm;
+    }
   });
   const [selectedFiles, setSelectedFiles] = useState<Record<UploadField, File[]>>({
     referenceNotes: [],
@@ -702,10 +757,49 @@ function NewWorkflow({ onCancel, onCreated }: { onCancel: () => void; onCreated:
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [draftSavedAt, setDraftSavedAt] = useState("");
+
+  const draftFileNames = useMemo(() => {
+    try {
+      const saved = localStorage.getItem(NEW_WORKFLOW_DRAFT_KEY);
+      if (!saved) return {} as Record<UploadField, string>;
+      const parsed = JSON.parse(saved);
+      return (parsed?.fileNames || {}) as Record<UploadField, string>;
+    } catch {
+      return {} as Record<UploadField, string>;
+    }
+  }, [draftSavedAt]);
+
+  const saveDraft = (showMessage = true) => {
+    const payload = {
+      form,
+      fileNames: {
+        referenceNotes: selectedFiles.referenceNotes.map((file) => file.name).join("、") || form.referenceNotes,
+        contestFileNotes: selectedFiles.contestFileNotes.map((file) => file.name).join("、") || form.contestFileNotes,
+        attachmentNotes: selectedFiles.attachmentNotes.map((file) => file.name).join("、") || form.attachmentNotes,
+      },
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(NEW_WORKFLOW_DRAFT_KEY, JSON.stringify(payload));
+    if (showMessage) setDraftSavedAt(payload.savedAt);
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem(NEW_WORKFLOW_DRAFT_KEY);
+    setForm(defaultForm);
+    setSelectedFiles({ referenceNotes: [], contestFileNotes: [], attachmentNotes: [] });
+    setDraftSavedAt("");
+  };
 
   const create = async () => {
     if (!form.name.trim()) {
       setError("请填写项目名称");
+      return;
+    }
+    const missingRestoredFiles = (["referenceNotes", "contestFileNotes", "attachmentNotes"] as UploadField[])
+      .filter((field) => draftFileNames[field] && form[field] === draftFileNames[field] && selectedFiles[field].length === 0);
+    if (missingRestoredFiles.length) {
+      setError("已恢复上次暂存的文件名，但浏览器不能恢复真实文件。请重新选择这些上传文件后再创建工作流。");
       return;
     }
     setSaving(true);
@@ -731,6 +825,7 @@ function NewWorkflow({ onCancel, onCreated }: { onCancel: () => void; onCreated:
         const uploadData = await uploadResponse.json().catch(() => ({}));
         if (!uploadResponse.ok) throw new Error(uploadData.error || "文件上传失败");
       }
+      localStorage.removeItem(NEW_WORKFLOW_DRAFT_KEY);
       onCreated(data.id);
     } catch (err: any) {
       setError(friendlyFetchError(err, "创建工作流失败"));
@@ -755,6 +850,11 @@ function NewWorkflow({ onCancel, onCreated }: { onCancel: () => void; onCreated:
     update(key, names);
   };
 
+  useEffect(() => {
+    const timeout = window.setTimeout(() => saveDraft(false), 900);
+    return () => window.clearTimeout(timeout);
+  }, [form]);
+
   const selectedTemplate = templates[form.template];
   const plannedArtifacts = [
     form.figureMode ? `${form.figureCount} 张图` : "AI 规划图示",
@@ -769,7 +869,7 @@ function NewWorkflow({ onCancel, onCreated }: { onCancel: () => void; onCreated:
         <div className="hero-copy">
           <p className="eyebrow">New Workflow</p>
           <h1>新建项目书生成任务</h1>
-          <p className="muted">按 Modex 的流水线方式配置：先定赛项模板，再补充项目参数、图表要求和执行策略。</p>
+          <p className="muted">先选赛项，再提供主题素材、参考样式和附件证据。生成前会先做素材理解，不把参数框原文直接搬进正文。</p>
         </div>
         <button className="ghost" onClick={onCancel}>返回</button>
       </div>
@@ -802,8 +902,12 @@ function NewWorkflow({ onCancel, onCreated }: { onCancel: () => void; onCreated:
 
           <div className="builder-section">
             <div className="builder-section-head">
-              <h2>项目参数</h2>
-              <span>用于生成完整项目书</span>
+              <h2>主题素材</h2>
+              <span>先理解归纳，再写成正文</span>
+            </div>
+            <div className="input-guard">
+              <strong>填写方式</strong>
+              <span>这里可以粘贴想法和初版材料，但系统会先提炼服务对象、场景、产品能力、证据和待核验边界；正文不会直接复制参数原句。</span>
             </div>
             <div className="form-grid">
               <div>
@@ -819,16 +923,16 @@ function NewWorkflow({ onCancel, onCreated }: { onCancel: () => void; onCreated:
                 <input value={form.team} onChange={(e) => update("team", e.target.value)} placeholder="例如：已有原型、指导老师、试点单位、调研样本、竞赛经历" />
               </div>
               <div className="wide-field">
-                <label>项目简介</label>
-                <textarea value={form.brief} onChange={(e) => update("brief", e.target.value)} placeholder="写下已有想法、目标用户、核心功能、痛点和希望解决的问题。" rows={5} />
+                <label>想法与场景素材</label>
+                <textarea value={form.brief} onChange={(e) => update("brief", e.target.value)} placeholder="写目标用户、真实场景、痛点、已有想法。可以是草稿，生成前会先归纳理解。" rows={5} />
               </div>
               <div>
-                <label>技术与产品基础</label>
-                <textarea value={form.product} onChange={(e) => update("product", e.target.value)} placeholder="核心算法、系统架构、原型模块、实验指标、产品版本规划。" rows={5} />
+                <label>技术与产品素材</label>
+                <textarea value={form.product} onChange={(e) => update("product", e.target.value)} placeholder="核心算法、系统架构、原型模块、实验指标、产品版本规划。不要担心格式，系统会转写。" rows={5} />
               </div>
               <div>
-                <label>市场与商业设想</label>
-                <textarea value={form.market} onChange={(e) => update("market", e.target.value)} placeholder="目标客户、市场规模、竞品、收费方式、渠道和试点客户。" rows={5} />
+                <label>市场与商业素材</label>
+                <textarea value={form.market} onChange={(e) => update("market", e.target.value)} placeholder="目标客户、竞品、收费方式、渠道、试点对象。宏观数据会按公开资料/估算口径处理。" rows={5} />
               </div>
               <div>
                 <label>资金与财务设想</label>
@@ -887,22 +991,26 @@ function NewWorkflow({ onCancel, onCreated }: { onCancel: () => void; onCreated:
           <div className="builder-section">
             <div className="builder-section-head">
               <h2>参考资料与附件</h2>
-              <span>仅使用当前项目上传文件，不读取其他项目或历史样例</span>
+              <span>参考文档学结构，附件材料供正文证明</span>
+            </div>
+            <div className="input-guard">
+              <strong>资料边界</strong>
+              <span>上传本项目参考文档时，只学习目录、标题层级、段落布局、表格和文风；不会继承参考文档里的项目事实。未上传参考文档时，只按当前主题和内置竞赛结构生成。</span>
             </div>
             <div className="upload-grid">
               <label className="upload-box">
-                <span>上传本项目参考文档</span>
-                <small>{form.referenceNotes || "目录 / 写法 / 结构参考"}</small>
+                <span>上传本项目参考样式</span>
+                <small>{form.referenceNotes || draftFileNames.referenceNotes || "目录 / 写法 / 结构 / 排版参考"}</small>
                 <input type="file" multiple onChange={(e) => rememberFiles("referenceNotes", e.target.files)} />
               </label>
               <label className="upload-box">
-                <span>上传相关文件</span>
-                <small>{form.contestFileNotes || "PDF / Word / 图片 / 数据"}</small>
+                <span>上传正文依据材料</span>
+                <small>{form.contestFileNotes || draftFileNames.contestFileNotes || "PDF / Word / 图片 / 数据"}</small>
                 <input type="file" multiple onChange={(e) => rememberFiles("contestFileNotes", e.target.files)} />
               </label>
               <label className="upload-box">
                 <span>上传附件数据</span>
-                <small>{form.attachmentNotes || "CSV / Excel / JSON / 图片"}</small>
+                <small>{form.attachmentNotes || draftFileNames.attachmentNotes || "CSV / Excel / JSON / 图片"}</small>
                 <input type="file" multiple onChange={(e) => rememberFiles("attachmentNotes", e.target.files)} />
               </label>
             </div>
@@ -921,9 +1029,14 @@ function NewWorkflow({ onCancel, onCreated }: { onCancel: () => void; onCreated:
           </div>
 
           {error && <p className="error">{error}</p>}
-          <button className="launch-button" onClick={create} disabled={saving}>
-            {saving ? "正在创建工作流..." : "创建并进入工作流"}
-          </button>
+          <div className="launch-actions">
+            <button className="ghost" onClick={() => saveDraft()} disabled={saving}>暂存配置</button>
+            <button className="ghost" onClick={clearDraft} disabled={saving}>清空暂存</button>
+            <button className="launch-button" onClick={create} disabled={saving}>
+              {saving ? "正在创建工作流..." : "创建并进入工作流"}
+            </button>
+          </div>
+          {draftSavedAt && <p className="draft-note">已暂存：{new Date(draftSavedAt).toLocaleString()}。文件名会保留，真实文件需在创建前重新选择。</p>}
         </section>
 
         <aside className="builder-summary">
@@ -948,7 +1061,7 @@ function NewWorkflow({ onCancel, onCreated }: { onCancel: () => void; onCreated:
               <span>{form.reviewMode === "strict" ? "严格审查" : "快速生成"}</span>
               <span>{form.revisionLoop ? "自动改进循环" : "单轮生成"}</span>
             </div>
-            <button className="ghost wide" onClick={onCancel}>取消并返回</button>
+            <button className="ghost wide" onClick={() => { saveDraft(false); onCancel(); }}>暂存并返回</button>
           </div>
         </aside>
       </div>
@@ -1101,6 +1214,58 @@ function WorkflowDetail({
       await load();
     } catch (err: any) {
       setError(err.message ?? String(err));
+      setRunning(false);
+    }
+  };
+
+  const planWorkflow = async () => {
+    setRunning(true);
+    setError("");
+    setExportResult("");
+    try {
+      const response = await fetch(`${API}/workflows/${id}/plan`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "规划失败");
+      setExportResult("规划已生成");
+      await load();
+    } catch (err: any) {
+      setError(err.message ?? String(err));
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const executeWorkflow = async () => {
+    setRunning(true);
+    setError("");
+    setExportResult("");
+    try {
+      const response = await fetch(`${API}/workflows/${id}/execute`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "执行失败");
+      setExportResult(`执行完成：${data.finalPath}`);
+      await load();
+    } catch (err: any) {
+      setError(err.message ?? String(err));
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const auditWorkflow = async () => {
+    setRunning(true);
+    setError("");
+    setExportResult("");
+    try {
+      const response = await fetch(`${API}/workflows/${id}/audit`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "审计失败");
+      setDeliveryResult(data as DeliveryResult);
+      setExportResult("审计已完成");
+      await load();
+    } catch (err: any) {
+      setError(err.message ?? String(err));
+    } finally {
       setRunning(false);
     }
   };
@@ -1263,6 +1428,15 @@ function WorkflowDetail({
           </button>
           <button className="ghost" onClick={scanQuality} disabled={running || qualityLoading || workflow.status !== "completed"}>
             {qualityLoading ? "体检中..." : "质量体检"}
+          </button>
+          <button className="ghost" onClick={planWorkflow} disabled={running || workflow.status === "running"}>
+            {running ? "规划中..." : "规划"}
+          </button>
+          <button className="ghost" onClick={executeWorkflow} disabled={running || workflow.status === "running"}>
+            {running ? "执行中..." : "执行"}
+          </button>
+          <button className="ghost" onClick={auditWorkflow} disabled={running || workflow.status === "running"}>
+            {running ? "审计中..." : "审计"}
           </button>
           <button className="primary" onClick={() => deliver(false)} disabled={running || delivering}>
             {delivering ? "交付包生成中..." : "一键生成交付包"}
@@ -1590,7 +1764,7 @@ function WorkflowEditor({
   const chatLogRef = useRef<HTMLDivElement | null>(null);
   const consumedInitialInstructionRef = useRef("");
   const [messages, setMessages] = useState<AssistantMessage[]>([
-    { role: "assistant", status: "info", text: "我会按“诊断-计划-执行-复核”处理当前编辑器：右侧汇报判断依据和结果，正文修改直接写入中间编辑器。" },
+    { role: "assistant", status: "info", text: "直接输入你的要求就行。需要改正文时，我会把结果写回中间编辑器；只是提问或聊天时，我只在这里回复。" },
   ]);
   const [error, setError] = useState("");
 
@@ -1713,24 +1887,55 @@ function WorkflowEditor({
   ) => {
     setAssistantInput("");
     setAssistantBusy(true);
+    const requestMode = options?.mode ?? assistantMode;
+    const requestScope = options?.scope ?? assistantScope;
+    const fileName = activeFile?.name || "当前编辑器";
+    const startedAt = Date.now();
+    const chatHistory = messages
+      .filter((message) => message.status !== "working" && message.text.trim())
+      .slice(-12)
+      .map((message) => ({
+        role: message.role,
+        text: message.text.length > 1200 ? `${message.text.slice(0, 1200)}...` : message.text,
+      }));
+    const buildWorkingMessage = (): AssistantMessage => {
+      const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+      return {
+        role: "assistant",
+        status: "working",
+        text: `正在按你的要求处理：${fileName}\n当前进度：${assistantLivePhase(elapsedSeconds, requestMode)}\n已运行：${elapsedSeconds}s`,
+        trace: buildAssistantLiveTrace({ instruction, fileName, mode: requestMode, startedAt, chatCount: chatHistory.length }),
+      };
+    };
     setMessages((prev) => [
       ...prev,
       { role: "user", text: instruction },
-      { role: "assistant", status: "working", text: `收到：${instruction}\n正在处理：${activeFile?.name || "当前编辑器"}\n状态：分析指令并准备应用到中间编辑器。` },
+      buildWorkingMessage(),
     ]);
+    const progressTimer = window.setInterval(() => {
+      setMessages((prev) => {
+        const next = [...prev];
+        const lastWorking = next.findLastIndex((message) => message.role === "assistant" && message.status === "working");
+        if (lastWorking < 0) return prev;
+        next[lastWorking] = buildWorkingMessage();
+        return next;
+      });
+    }, 3000);
     try {
       const response = await fetch(`${API}/workflows/${id}/editor/assist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           instruction,
-          mode: `${options?.mode ?? assistantMode}/${options?.scope ?? assistantScope}`,
+          mode: `${requestMode}/${requestScope}`,
           path: activeFile?.path,
           content,
+          chatHistory,
         }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "AI 助手调用失败");
+      window.clearInterval(progressTimer);
       const patch = data.canApply ? String(data.patch || "") : "";
       const action = String(data.action || "suggest");
       const shouldApply = action === "replace_current_file" && patch;
@@ -1749,7 +1954,7 @@ function WorkflowEditor({
       if (action === "export_docx") compile("docx");
       if (action === "export_tex") compile("tex");
       const statusText = compactAssistantStatus(String(data.answer || ""), action, patch, activeFile?.name);
-      const trace = normalizeAgentTrace(data.agentTrace);
+      const trace = shouldApply ? normalizeAgentTrace(data.agentTrace) : [];
       const backup = data.backup || null;
       setMessages((prev) => {
         const doneMessage: AssistantMessage = {
@@ -1765,11 +1970,13 @@ function WorkflowEditor({
         return appendAssistantResult(prev, doneMessage);
       });
     } catch (err: any) {
+      window.clearInterval(progressTimer);
       setMessages((prev) => {
         const errorMessage: AssistantMessage = { role: "assistant", status: "error", text: `执行失败：${err.message ?? String(err)}` };
         return appendAssistantResult(prev, errorMessage);
       });
     } finally {
+      window.clearInterval(progressTimer);
       setAssistantBusy(false);
     }
   };
@@ -1789,13 +1996,13 @@ function WorkflowEditor({
   const currentStage = workflow?.steps?.find((step, index) => workflow.checkpoints?.some((checkpoint) => checkpoint.stepIndex === index + 1 && checkpoint.status === "running"));
   const assistantTitle = assistantMode === "agent" ? "Agent 模式" : `${assistantScope === "latex" ? "LaTeX" : "Python"} 编辑助手`;
   const assistantHint = assistantMode === "agent"
-    ? "Agent 会先诊断全文缺口，再规划修改、执行补丁并复核结果。"
+    ? "Agent 会按你的输入调用 Codex CLI；可以聊天、提问、改稿、排错或继续完善，不套固定指令。"
     : `输入修改指令，AI 自动处理当前 ${assistantScope === "latex" ? "LaTeX / Markdown" : "Python / 数据"} 文件；可以直接说“完善项目书”。`;
   const assistantWarning = assistantMode === "agent"
-    ? "Agent 模式适合整篇完善、批量改写、编译排错；右侧展示诊断指标和执行结果，正文在中间编辑器应用。"
+    ? "Agent 模式只在你明确要求修改时回写正文；普通对话不会改动中间编辑器。"
     : "轻量模式只处理当前打开文件，响应更快，但跨文件能力有限。";
   const assistantPlaceholder = assistantMode === "agent"
-    ? "输入指令，例如：继续完善整篇项目书。Ctrl+Enter 发送"
+    ? "直接输入你的要求，例如：这段哪里不自然？或：把这一段改专业。Ctrl+Enter 发送"
     : "输入修改指令，例如：完善项目书。Ctrl+Enter 发送";
   const editorLines = Math.max(content.split("\n").length, 12);
 
@@ -1911,22 +2118,6 @@ function WorkflowEditor({
           </div>
           <p className="assistant-hint">{assistantHint}</p>
           <p className={assistantMode === "agent" ? "assistant-warning agent" : "assistant-warning"}>{assistantWarning}</p>
-          <div className="assistant-quick-row">
-            <button
-              className="ghost compact"
-              onClick={() => runAssistantInstruction("请像 Codex 一样自检当前项目书，自己判断哪里还没有完善，然后直接修改中间编辑器。")}
-              disabled={assistantBusy || !activeFile}
-            >
-              自检继续完善
-            </button>
-            <button
-              className="ghost compact"
-              onClick={() => runAssistantInstruction("检查当前正文是否还有建议式语言、系统说明、重复内容或跨项目串项，有就直接清理到中间编辑器。")}
-              disabled={assistantBusy || !activeFile}
-            >
-              清理正文痕迹
-            </button>
-          </div>
           <div className="chat-log" ref={chatLogRef}>
             {messages.map((message, index) => (
               <div className={`chat-message ${message.role} ${message.status || ""}`} key={`${message.role}-${index}`}>
@@ -2013,7 +2204,7 @@ function WorkflowEditor({
               placeholder={assistantPlaceholder}
             />
             <button className="primary" onClick={askAssistant} disabled={assistantBusy || !assistantInput.trim()}>
-              {assistantBusy ? "分析中" : "发送"}
+              {assistantBusy ? "处理中" : "发送"}
             </button>
           </div>
         </aside>
@@ -2473,6 +2664,9 @@ function Style() {
       .template-tile em { color: var(--faint); font-style: normal; font-size: 12px; }
       .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
       .wide-field { grid-column: 1 / -1; }
+      .input-guard { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; align-items: start; margin: -2px 0 14px; padding: 11px 12px; border: 1px solid var(--accent-border); border-radius: 8px; background: var(--accent-soft); }
+      .input-guard strong { color: var(--accent); font-size: 12px; line-height: 1.45; }
+      .input-guard span { color: var(--text); font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
       .param-card { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
       .param-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 16px; border-bottom: 1px solid var(--line); background: var(--surface); }
       .param-row:last-child { border-bottom: 0; }
@@ -2500,8 +2694,11 @@ function Style() {
       .upload-box span { color: var(--text); font-weight: 700; }
       .upload-box small { color: var(--faint); line-height: 1.45; overflow-wrap: anywhere; }
       .upload-box input { display: none; }
+      .launch-actions { display: grid; grid-template-columns: 118px 118px minmax(0, 1fr); gap: 10px; align-items: stretch; }
+      .launch-actions .ghost { min-height: 52px; }
       .launch-button { width: 100%; border: 0; border-radius: 8px; padding: 16px 18px; color: #fff; background: linear-gradient(90deg, #635bff, #4f46e5); font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 12px 28px rgba(79,70,229,.22); }
       .launch-button:disabled { opacity: .62; cursor: not-allowed; }
+      .draft-note { margin: 10px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
       .builder-summary { position: sticky; top: 76px; display: grid; gap: 14px; }
       .summary-card h2 { margin: 4px 0 8px; font-size: 18px; }
       .summary-card p { color: var(--muted); line-height: 1.5; margin: 0 0 14px; }
@@ -2673,9 +2870,12 @@ function Style() {
       .chat-message.user { background: var(--accent); color: #fff; align-self: flex-end; max-width: 92%; }
       .agent-trace { display: grid; gap: 8px; margin-top: 10px; }
       .trace-step { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 8px; align-items: start; border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 84%, #5b7cfa 6%); border-radius: 9px; padding: 8px; }
+      .trace-step.working { border-color: var(--accent-border); background: color-mix(in srgb, var(--accent-soft) 78%, var(--surface) 22%); }
       .trace-step > span { width: 22px; height: 22px; border-radius: 999px; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 11px; font-weight: 900; }
+      .trace-step.working > span { animation: tracePulse 1.4s ease-in-out infinite; }
       .trace-step strong { display: block; color: var(--text); font-size: 12px; margin-bottom: 2px; }
       .trace-step small { display: block; color: var(--muted); line-height: 1.5; word-break: break-word; }
+      @keyframes tracePulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.92); opacity: .72; } }
       .patch-preview { margin: 9px 0 0; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 78%, #000 4%); color: var(--text); font-size: 11px; line-height: 1.55; white-space: pre-wrap; max-height: 150px; overflow: auto; }
       .editor-backup-note { margin-top: 9px; display: grid; gap: 3px; border: 1px solid var(--line); border-radius: 8px; background: color-mix(in srgb, var(--surface) 82%, #22c55e 7%); padding: 8px 10px; }
       .editor-backup-note strong { color: var(--text); font-size: 12px; }

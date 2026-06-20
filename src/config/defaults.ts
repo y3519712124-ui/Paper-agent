@@ -2,15 +2,13 @@
 // 默认路径配置
 // ============================================================
 
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { homedir } from "node:os";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const PROJECT_ROOT = join(__dirname, "..", "..");
+const PROJECT_ROOT = process.env.PAPER_PROJECT_ROOT || process.cwd();
 
 /** 模板目录 */
-export const TEMPLATE_DIR = join(PROJECT_ROOT, "templates");
+export const TEMPLATE_DIR = process.env.PAPER_TEMPLATE_DIR || join(PROJECT_ROOT, "templates");
 
 /** 内置 Agent 目录 */
 export const AGENTS_DIR = join(PROJECT_ROOT, "agents");
@@ -22,7 +20,7 @@ export const TEAMS_DIR = join(PROJECT_ROOT, "teams");
 export const PROJECTS_DIR = join(homedir(), ".paper", "projects");
 
 /** Python 模块目录 */
-export const PYTHON_DIR = join(PROJECT_ROOT, "python");
+export const PYTHON_DIR = process.env.PYTHONPATH || join(PROJECT_ROOT, "python");
 
 /** 默认 LLM 配置 */
 export const DEFAULT_LLM_CONFIG = {

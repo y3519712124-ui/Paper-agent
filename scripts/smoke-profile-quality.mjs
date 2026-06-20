@@ -38,6 +38,14 @@ const cases = [
     forbiddenRiskLabels: ["养老/护理方向", "农业/种植方向"],
   },
   {
+    name: "协创桥——校园竞赛组队交流平台",
+    template: "dachuang",
+    expectedProfile: "campus-competition-teaming",
+    forbiddenRiskLabels: ["低空/无人机方向", "养老/护理方向", "农业/种植方向"],
+    extraBody:
+      "该平台围绕高校学生参加大创、挑战杯、互联网+等赛事时找队友难、需求发布分散、技能标签不清、资料沉淀不足等问题，建设组队招募广场、学生技能画像、队友匹配推荐、赛事信息栏、团队交流区和成果展示页。",
+  },
+  {
     name: "基于无人地无人机协同的蜂群矩阵系统",
     template: "internet-plus",
     track: "低空经济",
@@ -87,16 +95,21 @@ function encodeId(id) {
 }
 
 async function ensureCaseProject(testCase) {
-  const id = `${SMOKE_PREFIX}${testCase.name}`;
+  const name = `${SMOKE_PREFIX}${testCase.name}`;
   try {
-    await request(`/api/workflows/${encodeId(id)}`, { method: "DELETE" });
+    const workflows = await request("/api/workflows");
+    await Promise.all(
+      workflows
+        .filter((workflow) => workflow?.name === name || String(workflow?.id || "").startsWith(SMOKE_PREFIX.trim()))
+        .map((workflow) => request(`/api/workflows/${encodeId(workflow.id)}`, { method: "DELETE" }).catch(() => {})),
+    );
   } catch {
-    // Project may not exist.
+    // Project may not exist or listing may be unavailable in older servers.
   }
-  await request("/api/workflows", {
+  const created = await request("/api/workflows", {
     method: "POST",
     body: JSON.stringify({
-      name: id,
+      name,
       template: testCase.template,
       competition: testCase.template,
       track: testCase.track || "",
@@ -105,7 +118,7 @@ async function ensureCaseProject(testCase) {
       revisionLoop: false,
     }),
   });
-  return id;
+  return created?.id || name;
 }
 
 async function writeMinimalFinalBook(id, testCase) {
@@ -147,7 +160,7 @@ async function run() {
     try {
       await writeMinimalFinalBook(id, testCase);
       const quality = await request(`/api/workflows/${encodeId(id)}/quality`);
-      const profileId = quality.profile?.id || "";
+      const profileId = quality.topic?.id || quality.profile?.id || "";
       const risky = (quality.contamination || []).filter((item) => item.risky);
       const forbiddenRisk = risky.find((item) => testCase.forbiddenRiskLabels.includes(item.label));
       const ok = profileId === testCase.expectedProfile && !forbiddenRisk;

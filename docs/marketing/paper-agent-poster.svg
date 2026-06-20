@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7fbff"/><stop offset="1" stop-color="#e8f5f9"/></linearGradient><style>.bold{font-family:'Microsoft YaHei',sans-serif;font-weight:700}.regular{font-family:'Microsoft YaHei',sans-serif}.latin{font-family:Arial,sans-serif}</style></defs>
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <rect x="72" y="176" width="936" height="444" rx="34" fill="white" stroke="#d6e2ef" stroke-width="2"/>
+  <image href="../../frontend/public/brand/paper-agent-mark.png" x="145" y="230" width="360" height="320" preserveAspectRatio="xMidYMid meet"/>
+  <text x="575" y="350" class="latin" font-size="86" fill="#082a56">Paper</text>
+  <text x="790" y="350" class="latin" font-size="86" fill="#00a3a8">agent</text>
+  <text x="72" y="755" class="latin" font-size="88" fill="#082a56">Paper-agent</text>
+  <text x="72" y="875" class="bold" font-size="54" fill="#132033">???????????????</text>
+  <text x="104" y="1840" class="latin" font-size="27" fill="#082a56">Windows / macOS / Linux</text>
+</svg>

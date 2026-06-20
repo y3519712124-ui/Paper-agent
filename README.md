@@ -96,6 +96,14 @@ If these resources are not present, placeholder folders are generated and the ap
 
 Paper-agent should only use user-uploaded reference documents as writing-structure references. Other projects, old local samples, unrelated directories, and historical test documents must not be used as implicit templates. This rule is important for avoiding topic contamination and template-like AI writing.
 
+## Product Requirements
+
+The project-book generation requirements are documented in [`docs/product-requirements.md`](docs/product-requirements.md). This document defines the current-topic isolation layer, input understanding layer, reference-style learning layer, competition skill layer, evidence layer, de-template cleanup, honest quality review, and export requirements that guide workflow development.
+
+## Architecture (actual runtime paths)
+
+[`docs/architecture.md`](docs/architecture.md) documents which code path the desktop/Web product actually runs (the Express server in `server/`) versus the separate CLI path (`src/core` + `src/cli`), and which modules are currently not wired into the production generation pipeline. Read it before assuming the "multi-agent engine" is active.
+
 ## License
 
 MIT

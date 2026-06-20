@@ -1,0 +1,40 @@
+# Project profile manifest — load order is SIGNIFICANT.
+#
+# inferProjectProfile() evaluates profiles in this order and returns the
+# FIRST whose match rules all pass. This exactly reproduces the original
+# if/else-if chain in workflows.ts. Do NOT reorder without re-deriving
+# the original precedence — elder-care-rag-agent must run before
+# elder-care-fall, agriculture before cross-border, etc.
+#
+# Each entry points to a profile YAML under templates/profiles/.
+# To add a new project topic WITHOUT touching code, drop a new
+# <id>.yaml here and append its filename to `order`.
+#
+# Scope semantics (must match the original has()/identityHas()):
+#   scope: text     -> tested against identity+track+market (lowercased)
+#   scope: identity -> tested against name+brief+product only (lowercased)
+#   negate: true    -> rule passes when the pattern does NOT match
+#
+# All rules in a profile's `match` list must pass (logical AND),
+# which mirrors the original `if (has(...) && has(...) && !identityHas(...))`.
+order:
+  - campus-competition-teaming.yaml
+  - campus-lab-carbon.yaml
+  - sar-hmad-detection.yaml
+  - low-altitude-drone-swarm.yaml
+  - elder-care-rag-agent.yaml
+  - elder-care-fall.yaml
+  - library-booking.yaml
+  - ai-counselor-agent.yaml
+  - smart-agriculture.yaml
+  - smart-flower-care.yaml
+  - cross-border-ai.yaml
+  - intangible-pattern-library.yaml
+  - culture-tourism.yaml
+  - home-nas-media.yaml
+  - touchless-interaction.yaml
+  - smart-fitness-coach.yaml
+  - creative-whiteboard.yaml
+  - accessibility-safety.yaml
+# If no profile matches, inferProjectProfile falls back to the `custom`
+# profile, which is built dynamically from the form fields in code.

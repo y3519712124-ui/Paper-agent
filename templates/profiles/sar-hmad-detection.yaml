@@ -1,0 +1,88 @@
+# Profile: SAR 场景超路由元适应检测网络
+# Migrated verbatim from server/routes/workflows.ts inferProjectProfile() (was lines ~4795-4812).
+# Match uses identityHas (scope: identity = name+brief+product).
+id: sar-hmad-detection
+title: SAR场景超路由元适应检测网络项目
+domain: 无人机搜救、小目标检测、复杂场景目标检测与应急救援智能感知
+position: >-
+  面向无人机搜救场景的小目标人员检测系统，构建多专家检测、场景路由和元学习优化一体化的
+  Hyper Route Meta-Adaptive Detection Network（HMAD-Ednet）
+users:
+  - 应急管理部门
+  - 消防救援队伍
+  - 航空应急救援队伍
+  - 无人机运营商
+  - 指挥系统集成商
+  - 山地/森林/灾后搜救组织
+scenes:
+  - 森林搜救
+  - 山地救援
+  - 灾后搜索
+  - 复杂植被航拍
+  - 跨地域跨季节无人机搜救
+  - 小目标人员检测
+  - 应急指挥辅助
+painPoints:
+  - 小目标人员难检测
+  - 姿态与尺度变化大
+  - 视角与背景复杂
+  - 跨场景泛化能力不足
+  - 单一检测器性能不稳定
+  - 误检漏检影响救援可靠性
+  - 模型选择缺少可解释依据
+productModules:
+  - HMAD-Ednet
+  - SPA-HyperNet
+  - 多专家检测器
+  - 场景路由模块
+  - Reptile元学习训练器
+  - HGF-C2f
+  - IoU质量门控
+  - Phase A/B验证流程
+  - 路由收益验证脚本
+techRoute: >-
+  无人机航拍/SAR场景图像输入 -> 场景特征提取 -> 场景路由判别 -> 多专家检测器选择 ->
+  元适应优化 -> mAP/P/R/F1与路由收益验证 -> 搜救指挥结果输出
+competitors:
+  - 传统单一YOLO检测器
+  - 人工航拍图像判读
+  - 通用无人机巡检算法
+  - 普通目标检测平台
+  - 应急救援硬件集成方案
+businessModels:
+  - 算法模块授权
+  - 应急搜救技术服务
+  - 指挥系统接口集成
+  - 场景化模型适配服务
+  - 无人机运营商合作分成
+  - 项目制试点与部署
+metrics:
+  - mAP
+  - Precision
+  - Recall
+  - F1
+  - 路由准确率
+  - 元适应得分
+  - 跨场景稳定性
+  - FPS/推理延迟
+  - 参数量
+  - 误检漏检率
+evidenceFocus:
+  - 图1系统架构图
+  - Phase A/Phase B流程图
+  - 实验结果表
+  - 消融实验
+  - 路由命中率记录
+  - 数据集说明
+  - mAP/P/R/F1曲线
+  - 场景样例图
+  - 测试日志
+writingWarnings:
+  - 不要写成低空经济蜂群协同项目
+  - 禁止出现蜂群任务规划、无人地面站、空地协同、多机编队、园区巡检、农业植保、物流配送、低空运营平台等串项内容
+  - 不要写成园区巡检、农业植保或无人地面站项目
+  - 不要写成养老、RAG知识库或普通AI平台
+  - 不要把尚未取得的真实救援订单、客户合同、专利授权或营收写成既成事实
+match:
+  - scope: identity
+    pattern: 'sar|超路由|元适应|hmad|hmed|ednet|spa-hypernet|hyper route|meta-adaptive|reptile|phase\s*a|phase\s*b|小目标检测|搜救|检测网络|scene route|场景路由|多专家检测|无人机搜救|路由准确率|元适应得分|mAP|precision|recall|f1'

@@ -2,6 +2,7 @@
   "name": "paper-agent",
   "version": "0.1.0",
   "description": "面向高校竞赛项目书的多智能体生成、编辑与导出工具",
+  "copyright": "Copyright 2026 Paper-agent contributors",
   "license": "MIT",
   "author": "Paper-agent contributors",
   "type": "module",
@@ -23,22 +24,26 @@
     "build": "tsup src/cli/index.ts --format esm --platform node --target node22 --outDir dist --dts --no-config",
     "dev": "tsx src/cli/index.ts",
     "build:frontend": "cd frontend && node node_modules/vite/bin/vite.js build",
-    "build:server": "tsup server/index.ts --format esm --platform node --target node22 --outDir server-dist --no-dts --external express --external cors --external ws --external yaml --no-config && node -e \"require('fs').writeFileSync('server-dist/package.json', JSON.stringify({ type: 'module' }, null, 2))\"",
+    "clean:release": "node -e \"require('fs').rmSync('release', { recursive: true, force: true })\"",
+    "clean:server": "node -e \"require('fs').rmSync('server-dist', { recursive: true, force: true })\"",
+    "build:server": "npm run clean:server && tsup --config tsup.server.config.mjs && node -e \"require('fs').writeFileSync('server-dist/package.json', JSON.stringify({ type: 'commonjs' }, null, 2))\"",
     "prepare:desktop-resources": "node scripts/prepare-desktop-resources.mjs",
     "build:desktop": "npm run prepare:desktop-resources && npm run build:frontend && npm run build:server",
-    "pack:win": "npm run build:desktop && electron-builder --win nsis --x64",
-    "pack:linux": "npm run build:desktop && electron-builder --linux tar.gz --x64",
-    "pack:mac": "npm run build:desktop && electron-builder --mac dmg zip --x64",
-    "pack:all": "npm run build:desktop && electron-builder --win nsis --linux tar.gz --mac dmg zip --x64",
+    "pack:win": "npm run clean:release && npm run build:desktop && electron-builder --win nsis --x64",
+    "pack:linux": "npm run clean:release && npm run build:desktop && electron-builder --linux tar.gz --x64",
+    "pack:mac": "npm run clean:release && npm run build:desktop && electron-builder --mac dmg zip --x64",
+    "pack:all": "npm run clean:release && npm run build:desktop && electron-builder --win nsis --linux tar.gz --mac dmg zip --x64",
     "test": "vitest run",
     "smoke:profile": "node scripts/smoke-profile-quality.mjs",
     "smoke:generation": "node scripts/smoke-generation-guards.mjs",
+    "smoke:input-understanding": "node scripts/smoke-input-understanding-guard.mjs",
+    "smoke:audit-blueprint": "node scripts/smoke-project-book-audit-blueprint.mjs",
     "smoke:export-format": "node scripts/smoke-export-format.mjs",
     "smoke:editor-agent": "node scripts/smoke-editor-agent.mjs",
     "smoke:quality-editor-flow": "node scripts/smoke-quality-editor-flow.mjs",
     "smoke:final-guard": "node scripts/smoke-final-manuscript-guard.mjs",
     "smoke:minimal-input": "node scripts/smoke-minimal-input-final.mjs",
-    "smoke:all": "npm run smoke:generation && npm run smoke:final-guard && npm run smoke:minimal-input && npm run smoke:editor-agent && npm run smoke:export-format && npm run smoke:quality-editor-flow && npm run smoke:profile",
+    "smoke:all": "npm run smoke:generation && npm run smoke:input-understanding && npm run smoke:audit-blueprint && npm run smoke:final-guard && npm run smoke:minimal-input && npm run smoke:editor-agent && npm run smoke:export-format && npm run smoke:quality-editor-flow && npm run smoke:profile",
     "test:watch": "vitest",
     "prepublishOnly": "npm run build"
   },
@@ -63,24 +68,22 @@
   "build": {
     "appId": "cn.xinciyuan.paper-agent",
     "productName": "Paper-agent",
+    "electronDist": "node_modules/electron/dist",
+    "icon": "build/icon.ico",
     "win": {
       "verifyUpdateCodeSignature": false,
-      "extraResources": [
-        {
-          "from": "desktop/resources/runtime/python",
-          "to": "app-resources/runtime/python"
-        },
-        {
-          "from": "desktop/resources/codex-latex",
-          "to": "app-resources/codex-latex"
-        }
-      ]
+      "icon": "build/icon.ico"
+    },
+    "afterPack": "scripts/after-pack-win-icon.cjs",
+    "extraMetadata": {
+      "description": "AI-assisted project proposal writing and export workspace"
     },
     "directories": {
       "output": "release"
     },
     "files": [
       "desktop/main.cjs",
+      "build/icon.ico",
       "package.json"
     ],
     "extraResources": [
@@ -96,15 +99,16 @@
         ]
       },
       {
-        "from": "server/node_modules",
-        "to": "app-resources/server-dist/node_modules",
-        "filter": [
-          "**/*",
-          "!**/@esbuild/**",
-          "!**/esbuild*/**",
-          "!**/typescript/**",
-          "!**/tsx/**"
-        ]
+        "from": "desktop/resources/runtime/python",
+        "to": "app-resources/runtime/python"
+      },
+      {
+        "from": "desktop/resources/codex-latex",
+        "to": "app-resources/codex-latex"
+      },
+      {
+        "from": "desktop/resources/skills",
+        "to": "app-resources/skills"
       },
       {
         "from": "python",
@@ -122,6 +126,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
       "shortcutName": "Paper-agent"
     },
     "linux": {
